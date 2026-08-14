@@ -680,6 +680,12 @@ customColorTrigger.addEventListener("click", (e) => {
   colorPicker.hidden = !colorPicker.hidden;
 });
 
+const colorPickerDone = document.getElementById("color-picker-done");
+colorPickerDone.addEventListener("click", (e) => {
+  e.stopPropagation();
+  colorPicker.hidden = true;
+});
+
 async function loadAccent() {
   const data = await storageGet(STORAGE_KEYS.accent);
   const stored = data[STORAGE_KEYS.accent];
