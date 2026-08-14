@@ -40,10 +40,10 @@
         <div class="settings-section">
           <div class="settings-label">Accent colour</div>
           <div class="swatch-row" id="swatch-row"></div>
-          <label class="swatch-custom">
+          <div class="swatch-custom">
             <span>Custom</span>
-            <input type="color" id="swatch-custom-input" value="#606edc" />
-          </label>
+            <span class="swatch-custom-slot" id="swatch-custom-slot"></span>
+          </div>
         </div>
         <div class="settings-section">
           <div class="settings-label">Layout</div>
@@ -96,6 +96,8 @@
   </div>
 
   <div class="tile-tooltip" id="tile-tooltip" role="tooltip"></div>
+
+  <input type="color" id="swatch-custom-input" value="#606edc" aria-label="Custom accent colour" />
 
   <script src="script.js"></script>
 </body>

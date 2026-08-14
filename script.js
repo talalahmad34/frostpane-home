@@ -454,6 +454,7 @@ const settingsPanel = document.getElementById("settings-panel");
 function closeSettingsPanel() {
   settingsPanel.hidden = true;
   settingsWidget.classList.remove("open");
+  customInput.classList.remove("visible");
 }
 
 settingsToggle.addEventListener("click", (e) => {
@@ -461,6 +462,12 @@ settingsToggle.addEventListener("click", (e) => {
   const willOpen = settingsPanel.hidden;
   settingsPanel.hidden = !willOpen;
   settingsWidget.classList.toggle("open", willOpen);
+  if (willOpen) {
+    positionCustomInput();
+    customInput.classList.add("visible");
+  } else {
+    customInput.classList.remove("visible");
+  }
 });
 document.addEventListener("click", (e) => {
   if (!settingsPanel.hidden && !settingsWidget.contains(e.target)) {
@@ -550,18 +557,20 @@ customInput.addEventListener("input", async () => {
 });
 
 /* Chrome mispositions the native color picker (often off-screen) when it's
-   opened from inside a backdrop-filter'd ancestor. Drop the filter for the
-   moment the picker is open, restore it once the picker closes. */
-function restorePanelBlur() {
-  settingsPanel.style.backdropFilter = "";
-  settingsPanel.style.webkitBackdropFilter = "";
+   opened from inside a backdrop-filter'd ancestor. #swatch-custom-input
+   lives as a direct child of <body> for exactly this reason — this just
+   keeps it visually aligned over its slot inside the settings panel. */
+const customInputSlot = document.getElementById("swatch-custom-slot");
+
+function positionCustomInput() {
+  const rect = customInputSlot.getBoundingClientRect();
+  customInput.style.left = `${rect.left}px`;
+  customInput.style.top = `${rect.top}px`;
 }
-customInput.addEventListener("mousedown", () => {
-  settingsPanel.style.backdropFilter = "none";
-  settingsPanel.style.webkitBackdropFilter = "none";
+
+window.addEventListener("resize", () => {
+  if (!settingsPanel.hidden) positionCustomInput();
 });
-customInput.addEventListener("change", restorePanelBlur);
-customInput.addEventListener("blur", restorePanelBlur);
 
 async function loadAccent() {
   const data = await storageGet(STORAGE_KEYS.accent);

@@ -669,13 +669,30 @@ html.ready .settings-widget {
   color: rgba(255, 255, 255, 0.6);
 }
 
-.swatch-custom input[type="color"] {
+.swatch-custom-slot {
+  display: inline-block;
+  width: 34px;
+  height: 24px;
+}
+
+/* Lives as a direct child of <body> (not inside the blurred settings
+   panel) and is positioned on top of .swatch-custom-slot via JS.
+   Chrome mispositions the native color picker popup when it's opened
+   from inside a backdrop-filter'd ancestor — this sidesteps it entirely. */
+#swatch-custom-input {
+  position: fixed;
   width: 34px;
   height: 24px;
   border: none;
   border-radius: 6px;
   background: transparent;
   cursor: pointer;
+  z-index: 60;
+  visibility: hidden;
+}
+
+#swatch-custom-input.visible {
+  visibility: visible;
 }
 
 /* Modal */
