@@ -1,3 +1,11 @@
+@font-face {
+  font-family: "Manrope";
+  src: url("fonts/Manrope.woff2") format("woff2");
+  font-weight: 200 700;
+  font-style: normal;
+  font-display: block;
+}
+
 :root {
   --accent: #606edc;
   --accent-soft: #3c828c;
@@ -368,6 +376,12 @@ body {
   height: 100%;
   object-fit: cover;
   border-radius: 10px;
+  opacity: 1;
+  transition: opacity 0.25s ease;
+}
+
+.tile-icon img.icon-loading {
+  opacity: 0;
 }
 
 .tile-label {

@@ -175,26 +175,25 @@ function renderTiles() {
 
     if (tile) {
       if (tile.icon) {
-        const img = document.createElement("img");
-        img.src = tile.icon;
-        img.alt = "";
-        img.onerror = () => {
-          img.remove();
-          icon.textContent = initials(tile.name);
-        };
-        icon.appendChild(img);
+        icon.textContent = tile.icon;
       } else {
         const host = hostOf(tile.url);
         const cached = host && faviconCache[host];
         const netUrl = faviconUrl(tile.url);
         if (cached || netUrl) {
           const img = document.createElement("img");
-          img.src = cached || netUrl;
           img.alt = "";
           img.onerror = () => {
             img.remove();
             icon.textContent = initials(tile.name);
           };
+          if (cached) {
+            img.src = cached;
+          } else {
+            img.className = "icon-loading";
+            img.onload = () => img.classList.remove("icon-loading");
+            img.src = netUrl;
+          }
           icon.appendChild(img);
           if (!cached && netUrl) cacheFavicon(host, netUrl, img);
         } else {
@@ -541,6 +540,20 @@ customInput.addEventListener("input", async () => {
   await storageSet({ [STORAGE_KEYS.accent]: { accent, soft: accent } });
   renderSwatches(null);
 });
+
+/* Chrome mispositions the native color picker (often off-screen) when it's
+   opened from inside a backdrop-filter'd ancestor. Drop the filter for the
+   moment the picker is open, restore it once the picker closes. */
+function restorePanelBlur() {
+  settingsPanel.style.backdropFilter = "";
+  settingsPanel.style.webkitBackdropFilter = "";
+}
+customInput.addEventListener("mousedown", () => {
+  settingsPanel.style.backdropFilter = "none";
+  settingsPanel.style.webkitBackdropFilter = "none";
+});
+customInput.addEventListener("change", restorePanelBlur);
+customInput.addEventListener("blur", restorePanelBlur);
 
 async function loadAccent() {
   const data = await storageGet(STORAGE_KEYS.accent);
