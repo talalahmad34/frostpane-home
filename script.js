@@ -33,6 +33,7 @@ const dateEl = document.getElementById("date");
 const greetingEl = document.getElementById("greeting");
 const searchForm = document.getElementById("search-form");
 const searchInput = document.getElementById("search-input");
+const tileTooltip = document.getElementById("tile-tooltip");
 
 function storageGet(keys) {
   return new Promise((resolve) => chrome.storage.local.get(keys, resolve));
@@ -127,6 +128,19 @@ function initials(name) {
   return trimmed ? trimmed[0].toUpperCase() : "?";
 }
 
+function showTileTooltip(el, text) {
+  if (!text) return;
+  tileTooltip.textContent = text;
+  const rect = el.getBoundingClientRect();
+  tileTooltip.style.left = `${rect.left + rect.width / 2}px`;
+  tileTooltip.style.top = `${rect.top}px`;
+  tileTooltip.classList.add("visible");
+}
+
+function hideTileTooltip() {
+  tileTooltip.classList.remove("visible");
+}
+
 function spawnRipple(el, clientX, clientY) {
   const rect = el.getBoundingClientRect();
   const size = Math.max(rect.width, rect.height) * 2.4;
@@ -141,15 +155,20 @@ function spawnRipple(el, clientX, clientY) {
 }
 
 function renderTiles() {
+  hideTileTooltip();
   grid.innerHTML = "";
   tiles.forEach((tile, i) => {
     const el = document.createElement("div");
     el.className = "tile" + (tile ? "" : " empty");
     el.setAttribute("data-index", String(i));
-    el.title = tile ? tile.name : "Add";
     el.tabIndex = 0;
     el.setAttribute("role", "button");
-    el.setAttribute("aria-label", tile ? tile.name : "Add bookmark");
+    const tooltipText = tile ? tile.name : "Add bookmark";
+    el.setAttribute("aria-label", tooltipText);
+    el.addEventListener("mouseenter", () => showTileTooltip(el, tooltipText));
+    el.addEventListener("mouseleave", hideTileTooltip);
+    el.addEventListener("focus", () => showTileTooltip(el, tooltipText));
+    el.addEventListener("blur", hideTileTooltip);
 
     const icon = document.createElement("div");
     icon.className = "tile-icon";

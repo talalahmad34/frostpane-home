@@ -16,6 +16,7 @@
     "storage"
   ],
   "host_permissions": [
-    "https://www.google.com/*"
+    "https://www.google.com/*",
+    "https://*.gstatic.com/*"
   ]
 }
