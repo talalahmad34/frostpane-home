@@ -1,37 +1,83 @@
+<div align="center">
+
+<img src="icons/icon128.png" width="72" alt="Frostpane icon" />
+
 # Frostpane
 
-A calm, glass-textured new tab page for Chrome and Brave — a live clock, quick search, and a 12-tile bookmark grid, wrapped in a soft animated frosted-glass surface.
+**A calm, glass-textured new tab page for Chrome and Brave.**
 
-![Open Stack layout](screenshots/stack.png)
+A live clock, quick search, and a 12-tile bookmark grid — wrapped in a soft, animated frosted-glass surface with three selectable layouts.
+
+[![License: MIT](https://img.shields.io/badge/license-MIT-6d78e8?style=flat-square)](LICENSE)
+[![Manifest V3](https://img.shields.io/badge/manifest-v3-6d78e8?style=flat-square)](manifest.json)
+[![No dependencies](https://img.shields.io/badge/dependencies-none-6d78e8?style=flat-square)](#tech)
+
+<br />
+
+<img src="screenshots/stack.png" width="720" alt="Frostpane — Open Stack layout" />
+
+</div>
+
+<br />
 
 ## Features
 
-- **Three layouts** — pick the shape that fits how you browse:
-  - **Open Stack** — centered clock over a 6×2 bookmark grid
-  - **Single Panel** — a wide, dense single card, bookmarks as horizontal pills
-  - **Quiet Dock** — a minimal icon strip with the clock as the anchor
-- **Live clock** with a 12/24-hour toggle and an auto date/greeting
-- **Accent themes** — six curated color presets plus a custom color picker, applied as a soft dual-tone glow behind the whole page
-- **12-tile bookmark grid** — click to open, right-click to edit, drag nothing (deliberately simple)
-- **Cached favicons** — icons are fetched once per domain and cached locally, so new tabs load instantly and don't repeatedly ping a favicon service
-- **Full keyboard navigation** — arrow keys move between bookmarks and the search bar, Enter/Space activates the focused tile
-- **Middle-click** a bookmark to open it in a new tab
-- **Liquid ripple** feedback on click, subtle zoom on hover
+- **Three layouts** — pick the shape that fits how you browse
+- **Live clock** with a 12/24-hour toggle, auto date, and time-aware greeting
+- **Accent themes** — six curated presets plus a custom color picker, rendered as a soft dual-tone glow behind the page
+- **12-tile bookmark grid** — click to open, right-click to edit
+- **Cached favicons** — each icon is fetched once per domain and cached locally, so new tabs load instantly with no repeat network calls
+- **Full keyboard navigation** — arrow keys move between bookmarks and the search bar, `Enter`/`Space` opens the focused tile
+- **Middle-click** any bookmark to open it in a new tab
+- **Liquid ripple** feedback on click, subtle lift-and-zoom on hover
 - **Export / Import** your bookmark grid as JSON
-- **Hover-revealed settings** — no clutter until you need it
+- **Hover-revealed settings** — nothing on screen until you ask for it
 
-<p>
-  <img src="screenshots/panel.png" width="49%" alt="Single Panel layout" />
-  <img src="screenshots/dock.png" width="49%" alt="Quiet Dock layout" />
-</p>
+<br />
 
-<img src="screenshots/settings.png" width="70%" alt="Settings panel" />
+## Layouts
+
+<table>
+<tr>
+<td align="center" width="34%">
+<img src="screenshots/stack.png" width="100%" alt="Open Stack layout" /><br />
+<sub><b>Open Stack</b> — centered clock over a 6×2 grid</sub>
+</td>
+<td align="center" width="34%">
+<img src="screenshots/panel.png" width="100%" alt="Single Panel layout" /><br />
+<sub><b>Single Panel</b> — one dense card, bookmarks as pills</sub>
+</td>
+<td align="center" width="34%">
+<img src="screenshots/dock.png" width="100%" alt="Quiet Dock layout" /><br />
+<sub><b>Quiet Dock</b> — a minimal icon strip, clock as anchor</sub>
+</td>
+</tr>
+</table>
+
+Switch between them any time from the settings panel, which appears on hover in the bottom-right corner:
+
+<div align="center">
+<img src="screenshots/settings.png" width="640" alt="Settings panel" />
+</div>
+
+<br />
+
+## Keyboard shortcuts
+
+| Key | Action |
+| --- | --- |
+| `←` `→` `↑` `↓` | Move focus between bookmarks and the search bar |
+| `Enter` / `Space` | Open the focused bookmark, or add one to an empty slot |
+| Middle-click | Open a bookmark in a new tab |
+| `Esc` | Close the settings panel or bookmark editor |
+
+<br />
 
 ## Install
 
 Frostpane isn't on the Chrome Web Store — install it as an unpacked extension:
 
-1. Clone this repo:
+1. Download the latest [release](../../releases/latest) and unzip it, **or** clone the repo:
    ```sh
    git clone https://github.com/talalahmad34/frostpane-home.git
    ```
@@ -40,10 +86,14 @@ Frostpane isn't on the Chrome Web Store — install it as an unpacked extension:
 4. Click **Load unpacked** and select the `frostpane-home` folder
 5. Open a new tab
 
+<br />
+
 ## Tech
 
 No build step, no framework — vanilla HTML, CSS, and JavaScript, backed by `chrome.storage.local` for persistence. Manifest V3.
 
+<br />
+
 ## License
 
-[MIT](LICENSE)
+[MIT](LICENSE) © [Talal Ahmad](https://github.com/talalahmad34)
