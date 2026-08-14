@@ -454,7 +454,7 @@ const settingsPanel = document.getElementById("settings-panel");
 function closeSettingsPanel() {
   settingsPanel.hidden = true;
   settingsWidget.classList.remove("open");
-  customInput.classList.remove("visible");
+  colorPicker.hidden = true;
 }
 
 settingsToggle.addEventListener("click", (e) => {
@@ -462,12 +462,7 @@ settingsToggle.addEventListener("click", (e) => {
   const willOpen = settingsPanel.hidden;
   settingsPanel.hidden = !willOpen;
   settingsWidget.classList.toggle("open", willOpen);
-  if (willOpen) {
-    positionCustomInput();
-    customInput.classList.add("visible");
-  } else {
-    customInput.classList.remove("visible");
-  }
+  if (!willOpen) colorPicker.hidden = true;
 });
 document.addEventListener("click", (e) => {
   if (!settingsPanel.hidden && !settingsWidget.contains(e.target)) {
@@ -527,7 +522,6 @@ async function loadClockFormat() {
 
 /* ---------- Accent colour ---------- */
 const swatchRow = document.getElementById("swatch-row");
-const customInput = document.getElementById("swatch-custom-input");
 
 function applyAccent(accent, soft) {
   document.documentElement.style.setProperty("--accent", accent);
@@ -544,32 +538,146 @@ function renderSwatches(active) {
       applyAccent(preset.accent, preset.soft);
       await storageSet({ [STORAGE_KEYS.accent]: preset });
       renderSwatches(preset.accent);
+      syncPickerUI(preset.accent);
     });
     swatchRow.appendChild(s);
   });
 }
 
-customInput.addEventListener("input", async () => {
-  const accent = customInput.value;
-  applyAccent(accent, accent);
-  await storageSet({ [STORAGE_KEYS.accent]: { accent, soft: accent } });
-  renderSwatches(null);
-});
-
-/* Chrome mispositions the native color picker (often off-screen) when it's
-   opened from inside a backdrop-filter'd ancestor. #swatch-custom-input
-   lives as a direct child of <body> for exactly this reason — this just
-   keeps it visually aligned over its slot inside the settings panel. */
-const customInputSlot = document.getElementById("swatch-custom-slot");
-
-function positionCustomInput() {
-  const rect = customInputSlot.getBoundingClientRect();
-  customInput.style.left = `${rect.left}px`;
-  customInput.style.top = `${rect.top}px`;
+/* ---------- Custom colour picker ----------
+   Built in-house rather than using the native <input type="color">: that
+   popup's positioning inside a backdrop-filter'd panel is unreliable
+   across browsers (renders off-screen, or steals focus and closes the
+   settings panel entirely). This is plain DOM, so none of that applies. */
+function hexToRgb(hex) {
+  const clean = hex.replace("#", "");
+  const num = parseInt(clean, 16);
+  return { r: (num >> 16) & 255, g: (num >> 8) & 255, b: num & 255 };
 }
 
-window.addEventListener("resize", () => {
-  if (!settingsPanel.hidden) positionCustomInput();
+function rgbToHex(r, g, b) {
+  return "#" + [r, g, b].map((v) => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0")).join("");
+}
+
+function rgbToHsv(r, g, b) {
+  r /= 255;
+  g /= 255;
+  b /= 255;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  const d = max - min;
+  let h = 0;
+  if (d !== 0) {
+    if (max === r) h = ((g - b) / d) % 6;
+    else if (max === g) h = (b - r) / d + 2;
+    else h = (r - g) / d + 4;
+    h *= 60;
+    if (h < 0) h += 360;
+  }
+  return { h, s: max === 0 ? 0 : d / max, v: max };
+}
+
+function hsvToRgb(h, s, v) {
+  const c = v * s;
+  const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+  const m = v - c;
+  let r, g, b;
+  if (h < 60) [r, g, b] = [c, x, 0];
+  else if (h < 120) [r, g, b] = [x, c, 0];
+  else if (h < 180) [r, g, b] = [0, c, x];
+  else if (h < 240) [r, g, b] = [0, x, c];
+  else if (h < 300) [r, g, b] = [x, 0, c];
+  else [r, g, b] = [c, 0, x];
+  return { r: (r + m) * 255, g: (g + m) * 255, b: (b + m) * 255 };
+}
+
+const customColorTrigger = document.getElementById("custom-color-trigger");
+const customColorChip = document.getElementById("custom-color-chip");
+const colorPicker = document.getElementById("color-picker");
+const colorSv = document.getElementById("color-sv");
+const colorSvThumb = document.getElementById("color-sv-thumb");
+const colorHue = document.getElementById("color-hue");
+const colorHueThumb = document.getElementById("color-hue-thumb");
+const colorHexInput = document.getElementById("color-hex-input");
+
+let pickerHsv = { h: 228, s: 0.61, v: 0.86 };
+
+function currentPickerHex() {
+  const { r, g, b } = hsvToRgb(pickerHsv.h, pickerHsv.s, pickerHsv.v);
+  return rgbToHex(r, g, b);
+}
+
+function renderPickerUI() {
+  colorSvThumb.style.left = `${pickerHsv.s * 100}%`;
+  colorSvThumb.style.top = `${(1 - pickerHsv.v) * 100}%`;
+  colorHueThumb.style.left = `${(pickerHsv.h / 360) * 100}%`;
+  colorSv.style.backgroundColor = `hsl(${pickerHsv.h}, 100%, 50%)`;
+  const hex = currentPickerHex();
+  customColorChip.style.background = hex;
+  if (document.activeElement !== colorHexInput) {
+    colorHexInput.value = hex.slice(1).toUpperCase();
+  }
+}
+
+async function commitPickerColor() {
+  const hex = currentPickerHex();
+  applyAccent(hex, hex);
+  await storageSet({ [STORAGE_KEYS.accent]: { accent: hex, soft: hex } });
+  renderSwatches(null);
+}
+
+function syncPickerUI(hex) {
+  const { r, g, b } = hexToRgb(hex);
+  pickerHsv = rgbToHsv(r, g, b);
+  renderPickerUI();
+}
+
+function dragSv(e) {
+  const rect = colorSv.getBoundingClientRect();
+  const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  const y = Math.max(0, Math.min(1, (e.clientY - rect.top) / rect.height));
+  pickerHsv.s = x;
+  pickerHsv.v = 1 - y;
+  renderPickerUI();
+  commitPickerColor();
+}
+
+colorSv.addEventListener("pointerdown", (e) => {
+  colorSv.setPointerCapture(e.pointerId);
+  dragSv(e);
+});
+colorSv.addEventListener("pointermove", (e) => {
+  if (e.buttons & 1) dragSv(e);
+});
+
+function dragHue(e) {
+  const rect = colorHue.getBoundingClientRect();
+  const x = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+  pickerHsv.h = x * 360;
+  renderPickerUI();
+  commitPickerColor();
+}
+
+colorHue.addEventListener("pointerdown", (e) => {
+  colorHue.setPointerCapture(e.pointerId);
+  dragHue(e);
+});
+colorHue.addEventListener("pointermove", (e) => {
+  if (e.buttons & 1) dragHue(e);
+});
+
+colorHexInput.addEventListener("input", () => {
+  const clean = colorHexInput.value.replace(/[^0-9a-fA-F]/g, "").slice(0, 6);
+  if (clean.length !== colorHexInput.value.length) colorHexInput.value = clean;
+  if (clean.length === 6) {
+    syncPickerUI(`#${clean}`);
+    commitPickerColor();
+  }
+});
+
+customColorTrigger.addEventListener("click", (e) => {
+  e.stopPropagation();
+  colorPicker.hidden = !colorPicker.hidden;
 });
 
 async function loadAccent() {
@@ -578,7 +686,7 @@ async function loadAccent() {
   const accent = stored || ACCENT_PRESETS[0];
   applyAccent(accent.accent, accent.soft);
   renderSwatches(accent.accent);
-  customInput.value = accent.accent;
+  syncPickerUI(accent.accent);
 }
 
 /* ---------- Init ---------- */

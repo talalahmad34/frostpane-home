@@ -40,9 +40,21 @@
         <div class="settings-section">
           <div class="settings-label">Accent colour</div>
           <div class="swatch-row" id="swatch-row"></div>
-          <div class="swatch-custom">
+          <button type="button" class="swatch-custom" id="custom-color-trigger">
             <span>Custom</span>
-            <span class="swatch-custom-slot" id="swatch-custom-slot"></span>
+            <span class="custom-color-chip" id="custom-color-chip"></span>
+          </button>
+          <div class="color-picker" id="color-picker" hidden>
+            <div class="color-sv" id="color-sv">
+              <div class="color-sv-thumb" id="color-sv-thumb"></div>
+            </div>
+            <div class="color-hue" id="color-hue">
+              <div class="color-hue-thumb" id="color-hue-thumb"></div>
+            </div>
+            <div class="color-hex-row">
+              <span>#</span>
+              <input type="text" id="color-hex-input" maxlength="6" spellcheck="false" autocomplete="off" />
+            </div>
           </div>
         </div>
         <div class="settings-section">
@@ -96,8 +108,6 @@
   </div>
 
   <div class="tile-tooltip" id="tile-tooltip" role="tooltip"></div>
-
-  <input type="color" id="swatch-custom-input" value="#606edc" aria-label="Custom accent colour" />
 
   <script src="script.js"></script>
 </body>
