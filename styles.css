@@ -79,6 +79,19 @@ body {
   padding: 0 80px;
 }
 
+.homescreen-card,
+.settings-widget {
+  opacity: 0;
+  transform: translateY(6px) scale(0.99);
+}
+
+html.ready .homescreen-card,
+html.ready .settings-widget {
+  opacity: 1;
+  transform: none;
+  transition: opacity 0.16s ease, transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
 /* Homescreen card (wraps clock, search, tiles for every layout) */
 .homescreen-card {
   display: flex;

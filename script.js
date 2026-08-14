@@ -1,3 +1,11 @@
+/* Hold the first paint invisible until the font is actually usable, then
+   reveal in one short beat — masks any residual swap instead of showing it.
+   Capped low so a slow/failed font load never turns this into a spinner. */
+Promise.race([
+  document.fonts ? document.fonts.ready : Promise.resolve(),
+  new Promise((resolve) => setTimeout(resolve, 120)),
+]).then(() => document.documentElement.classList.add("ready"));
+
 const TILE_COUNT = 12;
 const STORAGE_KEYS = {
   tiles: "frostpane_tiles",
