@@ -203,13 +203,13 @@ html.ready .settings-widget {
 [data-layout="panel"] .hs-header {
   width: 100%;
   grid-template-columns: auto 1fr;
-  grid-template-areas: "greeting date" "clock date";
-  column-gap: 20px;
-  align-items: start;
+  grid-template-areas: "greeting greeting" "clock date";
+  column-gap: 14px;
+  align-items: end;
 }
 [data-layout="panel"] #date {
-  justify-self: end;
-  padding-top: 6px;
+  justify-self: start;
+  padding-bottom: 14px;
 }
 
 /* Layout: Quiet Dock */
