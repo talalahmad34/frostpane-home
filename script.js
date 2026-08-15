@@ -138,6 +138,7 @@ function initials(name) {
 
 function showTileTooltip(el, text) {
   if (!text) return;
+  if (document.body.getAttribute("data-layout") !== "dock") return;
   tileTooltip.textContent = text;
   const rect = el.getBoundingClientRect();
   tileTooltip.style.left = `${rect.left + rect.width / 2}px`;
