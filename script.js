@@ -64,8 +64,8 @@ function updateClock() {
   const h = String(hour).padStart(2, "0");
   const m = String(now.getMinutes()).padStart(2, "0");
   clockEl.innerHTML = suffix
-    ? `${h}:${m}<span class="clock-meridiem">${suffix.trim()}</span>`
-    : `${h}:${m}`;
+    ? `${h}<span class="clock-colon">:</span>${m}<span class="clock-meridiem">${suffix.trim()}</span>`
+    : `${h}<span class="clock-colon">:</span>${m}`;
 
   const days = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
   const months = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
@@ -76,6 +76,16 @@ function updateClock() {
 }
 updateClock();
 setInterval(updateClock, 1000 * 30);
+
+/* ---------- Liquid-glass specular sheen (follows pointer over glass surfaces) ---------- */
+const SPECULAR_TARGETS = ".homescreen-card, .searchbar, .tile, .settings-panel, .modal";
+document.addEventListener("pointermove", (e) => {
+  const el = e.target.closest(SPECULAR_TARGETS);
+  if (!el) return;
+  const rect = el.getBoundingClientRect();
+  el.style.setProperty("--mx", `${((e.clientX - rect.left) / rect.width) * 100}%`);
+  el.style.setProperty("--my", `${((e.clientY - rect.top) / rect.height) * 100}%`);
+});
 
 /* ---------- Search ---------- */
 searchForm.addEventListener("submit", (e) => {
@@ -358,12 +368,16 @@ function openTileModal(index) {
   iconInput.value = tile && tile.icon ? tile.icon : "";
   removeBtn.hidden = !tile;
   modalBackdrop.hidden = false;
+  requestAnimationFrame(() => modalBackdrop.classList.add("open"));
   nameInput.focus();
 }
 
 function closeTileModal() {
-  modalBackdrop.hidden = true;
+  modalBackdrop.classList.remove("open");
   editingIndex = null;
+  setTimeout(() => {
+    modalBackdrop.hidden = true;
+  }, 280);
 }
 
 function normalizeUrl(raw) {

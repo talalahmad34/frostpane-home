@@ -28,6 +28,9 @@ body {
   font-family: "Manrope", system-ui, sans-serif;
   overflow: hidden;
   position: relative;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 .glow {
@@ -94,6 +97,7 @@ html.ready .settings-widget {
 
 /* Homescreen card (wraps clock, search, tiles for every layout) */
 .homescreen-card {
+  position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -105,6 +109,28 @@ html.ready .settings-widget {
   -webkit-backdrop-filter: blur(24px);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.35);
   padding: 56px 88px;
+}
+
+/* Cursor-tracked specular sheen — liquid-glass highlight that follows the pointer */
+.homescreen-card::after,
+.searchbar::after,
+.settings-panel::after,
+.modal::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, -20%), rgba(255, 255, 255, 0.14), transparent 62%);
+  opacity: 0;
+  transition: opacity 0.35s ease;
+}
+
+.homescreen-card:hover::after,
+.searchbar:hover::after,
+.settings-panel:hover::after,
+.modal:hover::after {
+  opacity: 1;
 }
 
 /* Clock header */
@@ -129,6 +155,15 @@ html.ready .settings-widget {
   font-variant-numeric: tabular-nums;
 }
 
+.clock-colon {
+  animation: clock-colon-pulse 2s ease-in-out infinite;
+}
+
+@keyframes clock-colon-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
 .clock-meridiem {
   font-size: 22px;
   font-weight: 400;
@@ -140,8 +175,8 @@ html.ready .settings-widget {
 
 .date {
   font-size: 14px;
-  font-weight: 300;
-  letter-spacing: 0.1em;
+  font-weight: 400;
+  letter-spacing: 0.08em;
   color: rgba(255, 255, 255, 0.48);
 }
 
@@ -370,6 +405,26 @@ html.ready .settings-widget {
 
 .tile:hover {
   transform: translateY(-6px) scale(1.045);
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.045));
+  border-color: rgba(255, 255, 255, 0.14);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.22),
+    0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.tile::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(120px circle at var(--mx, 50%) var(--my, -20%), rgba(255, 255, 255, 0.22), transparent 68%);
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.tile:hover::after {
+  opacity: 1;
 }
 
 .tile:focus-visible {
@@ -831,28 +886,47 @@ html.ready .settings-widget {
 .modal-backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.55);
+  background: rgba(6, 7, 10, 0.5);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 100;
+  opacity: 0;
+  transition: opacity 0.28s ease;
 }
 
 .modal-backdrop[hidden] {
   display: none;
 }
 
+.modal-backdrop.open {
+  opacity: 1;
+}
+
 .modal {
+  position: relative;
   width: 380px;
   max-width: 90vw;
   padding: 28px;
   border-radius: 24px;
-  background: var(--panel-bg);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 24px 70px rgba(0, 0, 0, 0.55);
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.03) 60%);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(28px) saturate(150%);
+  -webkit-backdrop-filter: blur(28px) saturate(150%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 24px 70px rgba(0, 0, 0, 0.55);
   display: flex;
   flex-direction: column;
   gap: 16px;
+  transform: translateY(14px) scale(0.96);
+  transition: transform 0.32s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.modal-backdrop.open .modal {
+  transform: none;
 }
 
 .modal-title {
