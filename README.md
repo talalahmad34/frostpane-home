@@ -8,6 +8,7 @@
 
 A live clock, quick search, and a 12-tile bookmark grid — wrapped in a soft, animated frosted-glass surface with three selectable layouts.
 
+[![Release](https://img.shields.io/badge/release-v1.1-6d78e8?style=flat-square)](../../releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-6d78e8?style=flat-square)](LICENSE)
 [![Manifest V3](https://img.shields.io/badge/manifest-v3-6d78e8?style=flat-square)](manifest.json)
 [![No dependencies](https://img.shields.io/badge/dependencies-none-6d78e8?style=flat-square)](#tech)
@@ -23,9 +24,13 @@ A live clock, quick search, and a 12-tile bookmark grid — wrapped in a soft, a
 ## Features
 
 - **Three layouts** — pick the shape that fits how you browse
-- **Live clock** with a 12/24-hour toggle, auto date, and time-aware greeting
+- **Search engine switcher** — Brave, Google, DuckDuckGo, or Startpage, picked from settings
+- **Drag-to-reorder bookmarks** — drag any tile onto another to swap their places, even into an empty slot
+- **Live clock** with a 12/24-hour toggle, a softly pulsing colon, auto date, and time-aware greeting
 - **Accent themes** — six curated presets plus a custom color picker, rendered as a soft dual-tone glow behind the page
 - **12-tile bookmark grid** — click to open, right-click to edit
+- **Liquid-glass hover glow** — a cursor-tracked specular highlight sweeps across the frosted card, search bar, and tiles as you move the mouse
+- **Frosted, animated bookmark editor** — the add/edit modal opens and closes with a soft blur-and-scale transition
 - **Cached favicons** — each icon is fetched once per domain and cached locally, so new tabs load instantly with no repeat network calls
 - **Full keyboard navigation** — arrow keys move between bookmarks and the search bar, `Enter`/`Space` opens the focused tile
 - **Middle-click** any bookmark to open it in a new tab
@@ -49,7 +54,7 @@ A live clock, quick search, and a 12-tile bookmark grid — wrapped in a soft, a
 </td>
 <td align="center" width="34%">
 <img src="screenshots/dock.png" width="100%" alt="Quiet Dock layout" /><br />
-<sub><b>Quiet Dock</b> — a minimal icon strip, clock as anchor</sub>
+<sub><b>Quiet Dock</b> — a minimal icon strip, clock as anchor, names on hover</sub>
 </td>
 </tr>
 </table>
@@ -91,6 +96,12 @@ Frostpane isn't on the Chrome Web Store — install it as an unpacked extension:
 ## Tech
 
 No build step, no framework — vanilla HTML, CSS, and JavaScript, backed by `chrome.storage.local` for persistence. Manifest V3.
+
+<br />
+
+## Changelog
+
+See [CHANGELOG.md](CHANGELOG.md) for release notes.
 
 <br />
 
