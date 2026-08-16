@@ -121,7 +121,7 @@ html.ready .settings-widget {
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  background: radial-gradient(420px circle at var(--mx, 50%) var(--my, -20%), rgba(255, 255, 255, 0.14), transparent 62%);
+  background: radial-gradient(220px circle at var(--mx, 50%) var(--my, -20%), rgba(255, 255, 255, 0.07), transparent 60%);
   opacity: 0;
   transition: opacity 0.35s ease;
 }
