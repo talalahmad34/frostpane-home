@@ -440,6 +440,16 @@ html.ready .settings-widget {
   transition: transform 0.15s ease;
 }
 
+.tile.dragging {
+  opacity: 0.35;
+}
+
+.tile.drag-over {
+  box-shadow:
+    0 0 0 2px color-mix(in srgb, var(--accent) 70%, white 15%),
+    0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
 .tile-ripple {
   position: absolute;
   border-radius: 50%;
@@ -705,6 +715,12 @@ html.ready .settings-widget {
 
 .layout-row {
   display: flex;
+  gap: 8px;
+}
+
+.engine-row {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 8px;
 }
 

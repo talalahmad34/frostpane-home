@@ -13,12 +13,20 @@ const STORAGE_KEYS = {
   layout: "frostpane_layout",
   clockFormat: "frostpane_clock_format",
   faviconCache: "frostpane_favicon_cache",
+  engine: "frostpane_engine",
 };
 
 const LAYOUTS = [
   { id: "stack", label: "Open Stack" },
   { id: "panel", label: "Single Panel" },
   { id: "dock", label: "Quiet Dock" },
+];
+
+const ENGINES = [
+  { id: "brave", label: "Brave", url: "https://search.brave.com/search?q=" },
+  { id: "google", label: "Google", url: "https://www.google.com/search?q=" },
+  { id: "duckduckgo", label: "DuckDuckGo", url: "https://duckduckgo.com/?q=" },
+  { id: "startpage", label: "Startpage", url: "https://www.startpage.com/sp/search?query=" },
 ];
 
 const ACCENT_PRESETS = [
@@ -32,6 +40,7 @@ const ACCENT_PRESETS = [
 
 let tiles = new Array(TILE_COUNT).fill(null);
 let editingIndex = null;
+let dragIndex = null;
 let faviconCache = {};
 const faviconFetching = new Set();
 
@@ -88,12 +97,39 @@ document.addEventListener("pointermove", (e) => {
 });
 
 /* ---------- Search ---------- */
+let searchEngine = ENGINES[0];
+
 searchForm.addEventListener("submit", (e) => {
   e.preventDefault();
   const q = searchInput.value.trim();
   if (!q) return;
-  window.location.href = `https://search.brave.com/search?q=${encodeURIComponent(q)}`;
+  window.location.href = `${searchEngine.url}${encodeURIComponent(q)}`;
 });
+
+const engineRow = document.getElementById("engine-row");
+
+function renderEngineOptions(active) {
+  engineRow.innerHTML = "";
+  ENGINES.forEach((eng) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "layout-option" + (eng.id === active ? " active" : "");
+    btn.textContent = eng.label;
+    btn.addEventListener("click", async () => {
+      searchEngine = eng;
+      await storageSet({ [STORAGE_KEYS.engine]: eng.id });
+      renderEngineOptions(eng.id);
+    });
+    engineRow.appendChild(btn);
+  });
+}
+
+async function loadEngine() {
+  const data = await storageGet(STORAGE_KEYS.engine);
+  const id = data[STORAGE_KEYS.engine] || ENGINES[0].id;
+  searchEngine = ENGINES.find((e) => e.id === id) || ENGINES[0];
+  renderEngineOptions(searchEngine.id);
+}
 
 /* ---------- Tiles ---------- */
 function hostOf(url) {
@@ -258,6 +294,38 @@ function renderTiles() {
     el.addEventListener("contextmenu", (e) => {
       e.preventDefault();
       if (tile) openTileModal(i);
+    });
+
+    el.draggable = !!tile;
+    el.addEventListener("dragstart", (e) => {
+      dragIndex = i;
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/plain", String(i));
+      requestAnimationFrame(() => el.classList.add("dragging"));
+    });
+    el.addEventListener("dragend", () => {
+      dragIndex = null;
+      grid.querySelectorAll(".tile.dragging, .tile.drag-over").forEach((t) => t.classList.remove("dragging", "drag-over"));
+    });
+    el.addEventListener("dragover", (e) => {
+      if (dragIndex === null || dragIndex === i) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "move";
+      el.classList.add("drag-over");
+    });
+    el.addEventListener("dragleave", () => {
+      el.classList.remove("drag-over");
+    });
+    el.addEventListener("drop", async (e) => {
+      e.preventDefault();
+      el.classList.remove("drag-over");
+      if (dragIndex === null || dragIndex === i) return;
+      const from = dragIndex;
+      const to = i;
+      dragIndex = null;
+      [tiles[from], tiles[to]] = [tiles[to], tiles[from]];
+      await saveTiles();
+      renderTiles();
     });
 
     grid.appendChild(el);
@@ -717,4 +785,5 @@ async function loadAccent() {
   loadAccent();
   loadLayout();
   loadClockFormat();
+  loadEngine();
 })();
