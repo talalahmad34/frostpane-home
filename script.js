@@ -12,6 +12,7 @@ const STORAGE_KEYS = {
   accent: "frostpane_accent",
   layout: "frostpane_layout",
   clockFormat: "frostpane_clock_format",
+  glassIcons: "frostpane_glass_icons",
   faviconCache: "frostpane_favicon_cache",
   engine: "frostpane_engine",
 };
@@ -140,9 +141,15 @@ function hostOf(url) {
   }
 }
 
-function faviconUrl(url) {
-  const host = hostOf(url);
+function faviconUrl(host) {
   return host ? `https://www.google.com/s2/favicons?sz=64&domain=${host}` : null;
+}
+
+// Google's favicon service often lacks entries for subdomains (e.g. web.whatsapp.com
+// 404s while whatsapp.com succeeds), so fall back to the registrable root domain.
+function rootHost(host) {
+  const parts = host.split(".");
+  return parts.length > 2 ? parts.slice(-2).join(".") : host;
 }
 
 function blobToDataUrl(blob) {
@@ -158,7 +165,9 @@ async function cacheFavicon(host, networkUrl, img) {
   if (!host || faviconFetching.has(host)) return;
   faviconFetching.add(host);
   try {
-    const res = await fetch(networkUrl);
+    let res = await fetch(networkUrl);
+    const root = rootHost(host);
+    if (!res.ok && root !== host) res = await fetch(faviconUrl(root));
     if (!res.ok) return;
     const blob = await res.blob();
     const dataUrl = await blobToDataUrl(blob);
@@ -234,11 +243,17 @@ function renderTiles() {
       } else {
         const host = hostOf(tile.url);
         const cached = host && faviconCache[host];
-        const netUrl = faviconUrl(tile.url);
+        const netUrl = host && faviconUrl(host);
         if (cached || netUrl) {
           const img = document.createElement("img");
           img.alt = "";
           img.onerror = () => {
+            const root = host && rootHost(host);
+            if (root && root !== host && !img.dataset.fallback) {
+              img.dataset.fallback = "1";
+              img.src = faviconUrl(root);
+              return;
+            }
             img.remove();
             icon.textContent = initials(tile.name);
           };
@@ -603,6 +618,25 @@ async function loadClockFormat() {
   updateClock();
 }
 
+/* ---------- Glass icons ---------- */
+const glassIconsToggle = document.getElementById("glass-icons-toggle");
+
+function applyGlassIcons(on) {
+  document.body.setAttribute("data-glass-icons", on ? "on" : "off");
+  glassIconsToggle.checked = on;
+}
+
+glassIconsToggle.addEventListener("change", async () => {
+  applyGlassIcons(glassIconsToggle.checked);
+  await storageSet({ [STORAGE_KEYS.glassIcons]: glassIconsToggle.checked });
+});
+
+async function loadGlassIcons() {
+  const data = await storageGet(STORAGE_KEYS.glassIcons);
+  const stored = data[STORAGE_KEYS.glassIcons];
+  applyGlassIcons(stored !== undefined ? stored : true);
+}
+
 /* ---------- Accent colour ---------- */
 const swatchRow = document.getElementById("swatch-row");
 
@@ -780,6 +814,7 @@ async function loadAccent() {
 
 /* ---------- Init ---------- */
 (async function init() {
+  await loadGlassIcons(); // before any tile paints, so the icon finish never flashes
   await loadFaviconCache();
   await loadTiles();
   loadAccent();
