@@ -17,6 +17,12 @@ const STORAGE_KEYS = {
   engine: "frostpane_engine",
 };
 
+/* Bump when the cached-icon shape or the URL we fetch them from changes — a
+   mismatch drops the whole cache so bad icons heal on upgrade instead of
+   needing the bookmark removed and re-added. */
+const FAVICON_CACHE_VERSION = 2;
+const FAVICON_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
+
 const LAYOUTS = [
   { id: "stack", label: "Open Stack" },
   { id: "panel", label: "Single Panel" },
@@ -171,8 +177,8 @@ async function cacheFavicon(host, networkUrl, img) {
     if (!res.ok) return;
     const blob = await res.blob();
     const dataUrl = await blobToDataUrl(blob);
-    faviconCache[host] = dataUrl;
-    await storageSet({ [STORAGE_KEYS.faviconCache]: faviconCache });
+    faviconCache[host] = { d: dataUrl, t: Date.now() };
+    await saveFaviconCache();
     if (img && img.isConnected) img.src = dataUrl;
   } catch {
     /* offline or blocked — the live network URL already set on img stays as-is */
@@ -181,9 +187,42 @@ async function cacheFavicon(host, networkUrl, img) {
   }
 }
 
+function cachedIcon(host) {
+  const entry = host && faviconCache[host];
+  return entry ? entry.d : null;
+}
+
+function saveFaviconCache() {
+  return storageSet({
+    [STORAGE_KEYS.faviconCache]: { v: FAVICON_CACHE_VERSION, entries: faviconCache },
+  });
+}
+
 async function loadFaviconCache() {
-  const data = await storageGet(STORAGE_KEYS.faviconCache);
-  faviconCache = data[STORAGE_KEYS.faviconCache] || {};
+  const stored = (await storageGet(STORAGE_KEYS.faviconCache))[STORAGE_KEYS.faviconCache];
+  // Pre-1.2.1 stored a bare { host: dataUrl } map with no version. Anything that
+  // isn't the current shape is discarded rather than migrated — favicons are
+  // cheap to refetch, and a rebuild is what clears the stale ones.
+  const usable = stored && stored.v === FAVICON_CACHE_VERSION && stored.entries;
+  faviconCache = usable ? stored.entries : {};
+  // Overwrite a rejected blob straight away rather than leaving the old base64
+  // sitting in storage until the next successful fetch happens to replace it.
+  if (stored && !usable) await saveFaviconCache();
+}
+
+/* Drop icons that have aged out or whose bookmark is gone, so the cache tracks
+   the grid instead of growing forever. Runs once per load, after tiles exist. */
+async function pruneFaviconCache() {
+  const live = new Set(tiles.filter(Boolean).map((t) => hostOf(t.url)).filter(Boolean));
+  const cutoff = Date.now() - FAVICON_MAX_AGE_MS;
+  let dropped = 0;
+  for (const [host, entry] of Object.entries(faviconCache)) {
+    if (!live.has(host) || !entry || typeof entry.t !== "number" || entry.t < cutoff) {
+      delete faviconCache[host];
+      dropped++;
+    }
+  }
+  if (dropped) await saveFaviconCache();
 }
 
 function initials(name) {
@@ -242,7 +281,7 @@ function renderTiles() {
         icon.textContent = tile.icon;
       } else {
         const host = hostOf(tile.url);
-        const cached = host && faviconCache[host];
+        const cached = cachedIcon(host);
         const netUrl = host && faviconUrl(host);
         if (cached || netUrl) {
           const img = document.createElement("img");
@@ -495,14 +534,39 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && !modalBackdrop.hidden) closeTileModal();
 });
 
-/* ---------- Export / Import ---------- */
-document.getElementById("export-btn").addEventListener("click", () => {
-  const payload = tiles.slice(0, TILE_COUNT);
+/* ---------- Export / Import ----------
+   A backup carries the whole page, not just the grid: through 1.2 this wrote a
+   bare array of tiles, so restoring on a new machine silently lost the accent,
+   layout, engine, and toggles. The file is now an object with a schema tag —
+   bare arrays are still accepted on import so older backups keep working. */
+const BACKUP_SCHEMA = 1;
+
+document.getElementById("export-btn").addEventListener("click", async () => {
+  const stored = await storageGet([
+    STORAGE_KEYS.accent,
+    STORAGE_KEYS.layout,
+    STORAGE_KEYS.engine,
+    STORAGE_KEYS.clockFormat,
+    STORAGE_KEYS.glassIcons,
+  ]);
+  const payload = {
+    app: "frostpane",
+    schema: BACKUP_SCHEMA,
+    exported: new Date().toISOString(),
+    tiles: tiles.slice(0, TILE_COUNT),
+    settings: {
+      accent: stored[STORAGE_KEYS.accent] || ACCENT_PRESETS[0],
+      layout: stored[STORAGE_KEYS.layout] || LAYOUTS[0].id,
+      engine: stored[STORAGE_KEYS.engine] || ENGINES[0].id,
+      clockFormat: stored[STORAGE_KEYS.clockFormat] !== undefined ? stored[STORAGE_KEYS.clockFormat] : true,
+      glassIcons: stored[STORAGE_KEYS.glassIcons] !== undefined ? stored[STORAGE_KEYS.glassIcons] : true,
+    },
+  };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
   a.href = url;
-  a.download = "frostpane-bookmarks.json";
+  a.download = "frostpane-backup.json";
   a.click();
   URL.revokeObjectURL(url);
 });
@@ -516,22 +580,70 @@ importInput.addEventListener("change", async () => {
   if (!file) return;
   try {
     const text = await file.text();
-    const data = JSON.parse(text);
-    if (!validateImport(data)) {
-      alert("Invalid file: expected an array of up to 12 { name, url, icon } objects.");
+    const parsed = JSON.parse(text);
+    // Legacy backups (1.0–1.2) are a bare tile array; current ones are an object.
+    const isLegacy = Array.isArray(parsed);
+    const tileData = isLegacy ? parsed : parsed && parsed.tiles;
+    if (!validateImport(tileData)) {
+      alert("Invalid file: expected a Frostpane backup, or an array of up to 12 { name, url, icon } objects.");
       return;
     }
     tiles = new Array(TILE_COUNT).fill(null);
-    for (let i = 0; i < Math.min(TILE_COUNT, data.length); i++) {
-      const item = data[i];
+    for (let i = 0; i < Math.min(TILE_COUNT, tileData.length); i++) {
+      const item = tileData[i];
       tiles[i] = item ? { name: item.name, url: item.url, icon: item.icon || null } : null;
     }
     await saveTiles();
     renderTiles();
+    if (!isLegacy && parsed.settings) await applyImportedSettings(parsed.settings);
   } catch {
     alert("Could not read that file as valid JSON.");
   }
 });
+
+/* Each setting is validated against the known presets before it is applied, so
+   a hand-edited or corrupt backup can't wedge the page into an unknown state.
+   Anything unrecognised is skipped and the current value is left alone. */
+async function applyImportedSettings(s) {
+  if (!s || typeof s !== "object") return;
+  const writes = {};
+
+  const hex = /^#[0-9a-f]{6}$/i;
+  if (s.accent && typeof s.accent === "object" && hex.test(s.accent.accent || "")) {
+    const accent = { accent: s.accent.accent, soft: hex.test(s.accent.soft || "") ? s.accent.soft : s.accent.accent };
+    applyAccent(accent.accent, accent.soft);
+    renderSwatches(accent.accent);
+    syncPickerUI(accent.accent);
+    writes[STORAGE_KEYS.accent] = accent;
+  }
+
+  if (LAYOUTS.some((l) => l.id === s.layout)) {
+    applyLayout(s.layout);
+    renderLayoutOptions(s.layout);
+    renderTiles();
+    writes[STORAGE_KEYS.layout] = s.layout;
+  }
+
+  if (ENGINES.some((e) => e.id === s.engine)) {
+    searchEngine = ENGINES.find((e) => e.id === s.engine);
+    renderEngineOptions(searchEngine.id);
+    writes[STORAGE_KEYS.engine] = searchEngine.id;
+  }
+
+  if (typeof s.clockFormat === "boolean") {
+    use24Hour = s.clockFormat;
+    clockFormatToggle.checked = use24Hour;
+    updateClock();
+    writes[STORAGE_KEYS.clockFormat] = use24Hour;
+  }
+
+  if (typeof s.glassIcons === "boolean") {
+    applyGlassIcons(s.glassIcons);
+    writes[STORAGE_KEYS.glassIcons] = s.glassIcons;
+  }
+
+  if (Object.keys(writes).length) await storageSet(writes);
+}
 
 function validateImport(data) {
   if (!Array.isArray(data) || data.length > TILE_COUNT) return false;
@@ -817,6 +929,7 @@ async function loadAccent() {
   await loadGlassIcons(); // before any tile paints, so the icon finish never flashes
   await loadFaviconCache();
   await loadTiles();
+  pruneFaviconCache(); // after tiles, so it knows which hosts are still in use
   loadAccent();
   loadLayout();
   loadClockFormat();

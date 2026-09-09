@@ -8,7 +8,7 @@
 
 A live clock, quick search, and a 12-tile bookmark grid — wrapped in a soft, animated frosted-glass surface with three selectable layouts. Even the bookmark icons are finished in frosted glass, so the whole page reads as one calm surface rather than a wall of brand colors.
 
-[![Release](https://img.shields.io/badge/release-v1.2-6d78e8?style=flat-square)](../../releases/latest)
+[![Release](https://img.shields.io/badge/release-v1.2.1-6d78e8?style=flat-square)](../../releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-6d78e8?style=flat-square)](LICENSE)
 [![Manifest V3](https://img.shields.io/badge/manifest-v3-6d78e8?style=flat-square)](manifest.json)
 [![No dependencies](https://img.shields.io/badge/dependencies-none-6d78e8?style=flat-square)](#tech)
@@ -32,11 +32,12 @@ A live clock, quick search, and a 12-tile bookmark grid — wrapped in a soft, a
 - **12-tile bookmark grid** — click to open, right-click to edit
 - **Liquid-glass hover glow** — a cursor-tracked specular highlight sweeps across the frosted card, search bar, and tiles as you move the mouse
 - **Frosted, animated bookmark editor** — the add/edit modal opens and closes with a soft blur-and-scale transition
-- **Cached favicons** — each icon is fetched once per domain and cached locally, so new tabs load instantly with no repeat network calls, with an automatic root-domain fallback for subdomains like `web.whatsapp.com`
+- **Cached favicons** — each icon is fetched once per domain and cached locally, so new tabs load instantly with no repeat network calls, with an automatic root-domain fallback for subdomains like `web.whatsapp.com`. The cache is pruned as bookmarks change, so it never grows unbounded
 - **Full keyboard navigation** — arrow keys move between bookmarks and the search bar, `Enter`/`Space` opens the focused tile
 - **Middle-click** any bookmark to open it in a new tab
 - **Liquid ripple** feedback on click, subtle lift-and-zoom on hover
-- **Export / Import** your bookmark grid as JSON
+- **Export / Import** your whole setup as JSON — bookmarks plus accent, layout, search engine, and toggles
+- **Respects reduce motion** — every animation stands down when your system asks for less movement
 - **Hover-revealed settings** — nothing on screen until you ask for it
 
 <br />

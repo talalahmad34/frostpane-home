@@ -2,6 +2,21 @@
 
 All notable changes to Frostpane are documented here.
 
+## [1.2.1] — 2026-09-09
+
+A quality pass — no new surface, three rough edges smoothed.
+
+### Added
+- Respect for the system **reduce motion** setting — the drifting background glows, pulsing colon, spinning search halo, cursor-tracked sheen, and hover lift all stand down when the OS asks for less movement
+- Backups now carry your **whole page**, not just the grid: accent, layout, search engine, clock format, and the glass icons toggle travel with the file
+
+### Changed
+- Exported backups are now named `frostpane-backup.json` and use a tagged object format. Bookmark files exported by 1.0–1.2 still import exactly as before
+- Cached favicons carry a version and a timestamp, and are pruned when they age past 30 days or their bookmark is removed — so the cache tracks the grid instead of growing forever
+
+### Fixed
+- Stale cached icons now heal on upgrade instead of needing the bookmark removed and re-added — the WhatsApp workaround from 1.2 is no longer necessary
+
 ## [1.2] — 2026-09-02
 
 ### Added

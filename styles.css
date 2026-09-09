@@ -1065,3 +1065,41 @@ body[data-glass-icons="off"] .tile-icon::after {
     width: 90vw;
   }
 }
+
+/* ---------- Reduced motion ----------
+   Frostpane leans on movement — drifting background glows, a pulsing colon,
+   a spinning search halo, cursor-tracked sheen, ripples. When the OS asks for
+   less of that, collapse durations to a hair above zero instead of to none:
+   animationend/transitionend still fire, so listeners that clean up after
+   themselves (the tile ripple) keep working. Motion that is triggered by the
+   pointer rather than by a keyframe is switched off outright. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  /* Cursor-tracked specular glows and the spinning search halo are pure motion.
+     The .tile-icon sheen is deliberately untouched — it is a static finish. */
+  .homescreen-card::after,
+  .searchbar::after,
+  .settings-panel::after,
+  .modal::after,
+  .searchbar::before,
+  .tile::after {
+    display: none !important;
+  }
+
+  /* Decorative lift/zoom on hover, focus, and press */
+  .tile:hover,
+  .tile:focus-visible,
+  .tile:active {
+    transform: none !important;
+  }
+}
