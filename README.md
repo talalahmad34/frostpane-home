@@ -8,7 +8,7 @@
 
 A live clock, quick search, and a 12-tile bookmark grid — wrapped in a soft, animated frosted-glass surface with three selectable layouts. Even the bookmark icons are finished in frosted glass, so the whole page reads as one calm surface rather than a wall of brand colors.
 
-[![Release](https://img.shields.io/badge/release-v1.3-6d78e8?style=flat-square)](../../releases/latest)
+[![Release](https://img.shields.io/badge/release-v1.3.1-6d78e8?style=flat-square)](../../releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-6d78e8?style=flat-square)](LICENSE)
 [![Manifest V3](https://img.shields.io/badge/manifest-v3-6d78e8?style=flat-square)](manifest.json)
 [![No dependencies](https://img.shields.io/badge/dependencies-none-6d78e8?style=flat-square)](#tech)
@@ -24,7 +24,7 @@ A live clock, quick search, and a 12-tile bookmark grid — wrapped in a soft, a
 ## Features
 
 - **Three layouts** — pick the shape that fits how you browse
-- **Three backgrounds** — the original soft Glow, a Sky that follows the clock from dawn to a starlit night, or a drifting Aurora built from your accent, each with optional film grain and a switch to freeze the motion
+- **Three backgrounds** — the original soft Glow, a Sky that follows the clock from dawn to a starlit night with drifting clouds and shooting stars, or a drifting Aurora built from your accent, each with optional film grain and a switch to freeze the motion
 - **Four clock faces** — Light, Serif, Mono, or Bold with an accent gradient, in any colour you pick
 - **Glass icons** — bookmark favicons are desaturated and given a soft specular sheen so the grid reads as one pane of glass; full color returns on the tile you hover, and a settings toggle restores the original logos
 - **Search engine switcher** — Brave, Google, DuckDuckGo, or Startpage, picked from settings

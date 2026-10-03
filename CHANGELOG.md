@@ -2,6 +2,11 @@
 
 All notable changes to Frostpane are documented here.
 
+## [1.3.1] — 2026-10-03
+
+### Changed
+- The Sky background is visibly animated: two bands of clouds drift across it at different speeds, a soft sun/moon glow slowly breathes, the haze moves faster, stars twinkle more strongly, and a shooting star crosses the night sky every so often. Clouds thin out at night so the sky stays dark
+
 ## [1.3] — 2026-10-03
 
 A visual refresh — new backgrounds and clock styles that all mix and match.

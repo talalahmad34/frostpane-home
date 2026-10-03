@@ -865,6 +865,8 @@ function updateSky() {
   root.setProperty("--sky-mid", sky.mid);
   root.setProperty("--sky-bottom", sky.bottom);
   root.setProperty("--sky-stars", sky.stars.toFixed(2));
+  // Clouds thin out as the stars come up, so the night sky stays dark
+  root.setProperty("--sky-clouds", (1 - sky.stars * 0.75).toFixed(2));
 }
 setInterval(updateSky, 60 * 1000);
 
