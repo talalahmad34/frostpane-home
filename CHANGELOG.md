@@ -2,6 +2,21 @@
 
 All notable changes to Frostpane are documented here.
 
+## [1.3] — 2026-10-03
+
+A visual refresh — new backgrounds and clock styles that all mix and match.
+
+### Added
+- **Selectable backgrounds** — keep the original Glow, or switch to **Sky**, which follows the clock through dawn, day, dusk, and a starlit night (or stays pinned to one phase), or **Aurora**, four slowly drifting colour fields derived from your accent
+- **Film grain** — an optional texture over any background
+- **Animate background** toggle — freeze the background motion without changing its look
+- **Clock faces** — Light (the original), Serif, Mono, or Bold with an accent gradient
+- **Clock colour** — pick any colour for the clock with the built-in picker, or leave it on Auto to keep each face's own colouring
+- All of the above mix freely and are included in exported backups
+- Ctrl-click (Cmd-click on macOS) a bookmark to open it in a new tab, matching how browsers treat any link — middle-click still does the same
+
+### Changed
+- The settings panel scrolls inside itself when the window is too short to show it all
 ## [1.2.1] — 2026-09-09
 
 A quality pass — no new surface, three rough edges smoothed.

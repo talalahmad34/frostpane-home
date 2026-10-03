@@ -6,8 +6,14 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="stylesheet" href="styles.css" />
 </head>
-<body data-layout="stack">
+<body data-layout="stack" data-bg="glow" data-clock="light">
   <div class="glow" id="glow"></div>
+  <div class="sky">
+    <div class="sky-stars"></div>
+    <div class="sky-haze"></div>
+  </div>
+  <div class="aurora"><span></span><span></span><span></span><span></span></div>
+  <div class="grain"></div>
 
   <main class="panel">
     <div class="homescreen-card" id="homescreen-card">
@@ -58,6 +64,38 @@
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
                   <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-label">Background</div>
+          <div class="choice-row" id="bg-row"></div>
+          <div class="choice-row choice-row-tight" id="sky-row" hidden></div>
+          <div class="settings-row">
+            <span class="settings-row-label">Animate background</span>
+            <label class="switch">
+              <input type="checkbox" id="bg-motion-toggle" checked />
+              <span class="switch-track"></span>
+            </label>
+          </div>
+          <div class="settings-row">
+            <span class="settings-row-label">Film grain</span>
+            <label class="switch">
+              <input type="checkbox" id="grain-toggle" />
+              <span class="switch-track"></span>
+            </label>
+          </div>
+        </div>
+        <div class="settings-section">
+          <div class="settings-label">Clock face</div>
+          <div class="choice-row" id="clock-face-row"></div>
+          <div class="settings-row" id="clock-color-row">
+            <span class="settings-row-label">Clock colour</span>
+            <div class="clock-color-controls">
+              <button type="button" class="layout-option" id="clock-color-auto">Auto</button>
+              <button type="button" class="clock-color-trigger" id="clock-color-trigger" aria-label="Pick a clock colour">
+                <span class="custom-color-chip" id="clock-color-chip"></span>
               </button>
             </div>
           </div>

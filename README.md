@@ -8,7 +8,7 @@
 
 A live clock, quick search, and a 12-tile bookmark grid — wrapped in a soft, animated frosted-glass surface with three selectable layouts. Even the bookmark icons are finished in frosted glass, so the whole page reads as one calm surface rather than a wall of brand colors.
 
-[![Release](https://img.shields.io/badge/release-v1.2.1-6d78e8?style=flat-square)](../../releases/latest)
+[![Release](https://img.shields.io/badge/release-v1.3-6d78e8?style=flat-square)](../../releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-6d78e8?style=flat-square)](LICENSE)
 [![Manifest V3](https://img.shields.io/badge/manifest-v3-6d78e8?style=flat-square)](manifest.json)
 [![No dependencies](https://img.shields.io/badge/dependencies-none-6d78e8?style=flat-square)](#tech)
@@ -24,6 +24,8 @@ A live clock, quick search, and a 12-tile bookmark grid — wrapped in a soft, a
 ## Features
 
 - **Three layouts** — pick the shape that fits how you browse
+- **Three backgrounds** — the original soft Glow, a Sky that follows the clock from dawn to a starlit night, or a drifting Aurora built from your accent, each with optional film grain and a switch to freeze the motion
+- **Four clock faces** — Light, Serif, Mono, or Bold with an accent gradient, in any colour you pick
 - **Glass icons** — bookmark favicons are desaturated and given a soft specular sheen so the grid reads as one pane of glass; full color returns on the tile you hover, and a settings toggle restores the original logos
 - **Search engine switcher** — Brave, Google, DuckDuckGo, or Startpage, picked from settings
 - **Drag-to-reorder bookmarks** — drag any tile onto another to swap their places, even into an empty slot
@@ -34,7 +36,7 @@ A live clock, quick search, and a 12-tile bookmark grid — wrapped in a soft, a
 - **Frosted, animated bookmark editor** — the add/edit modal opens and closes with a soft blur-and-scale transition
 - **Cached favicons** — each icon is fetched once per domain and cached locally, so new tabs load instantly with no repeat network calls, with an automatic root-domain fallback for subdomains like `web.whatsapp.com`. The cache is pruned as bookmarks change, so it never grows unbounded
 - **Full keyboard navigation** — arrow keys move between bookmarks and the search bar, `Enter`/`Space` opens the focused tile
-- **Middle-click** any bookmark to open it in a new tab
+- **Ctrl-click or middle-click** any bookmark to open it in a new tab
 - **Liquid ripple** feedback on click, subtle lift-and-zoom on hover
 - **Export / Import** your whole setup as JSON — bookmarks plus accent, layout, search engine, and toggles
 - **Respects reduce motion** — every animation stands down when your system asks for less movement
@@ -75,6 +77,7 @@ Switch between them any time from the settings panel, which appears on hover in 
 | --- | --- |
 | `←` `→` `↑` `↓` | Move focus between bookmarks and the search bar |
 | `Enter` / `Space` | Open the focused bookmark, or add one to an empty slot |
+| `Ctrl`-click / `Cmd`-click | Open a bookmark in a new tab |
 | Middle-click | Open a bookmark in a new tab |
 | `Esc` | Close the settings panel or bookmark editor |
 

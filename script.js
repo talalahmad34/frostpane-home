@@ -15,6 +15,37 @@ const STORAGE_KEYS = {
   glassIcons: "frostpane_glass_icons",
   faviconCache: "frostpane_favicon_cache",
   engine: "frostpane_engine",
+  appearance: "frostpane_appearance",
+};
+
+const BACKGROUNDS = [
+  { id: "glow", label: "Glow" },
+  { id: "sky", label: "Sky" },
+  { id: "aurora", label: "Aurora" },
+];
+
+const SKY_PHASES = [
+  { id: "auto", label: "Auto" },
+  { id: "dawn", label: "Dawn" },
+  { id: "day", label: "Day" },
+  { id: "dusk", label: "Dusk" },
+  { id: "night", label: "Night" },
+];
+
+const CLOCK_FACES = [
+  { id: "light", label: "Light" },
+  { id: "serif", label: "Serif" },
+  { id: "mono", label: "Mono" },
+  { id: "bold", label: "Bold" },
+];
+
+const APPEARANCE_DEFAULTS = {
+  background: "glow",
+  skyPhase: "auto",
+  bgMotion: true,
+  grain: false,
+  clockFace: "light",
+  clockColor: null, // null = each face's own colouring; otherwise a #rrggbb override
 };
 
 /* Bump when the cached-icon shape or the URL we fetch them from changes — a
@@ -64,6 +95,26 @@ function storageGet(keys) {
 }
 function storageSet(items) {
   return new Promise((resolve) => chrome.storage.local.set(items, resolve));
+}
+
+/* A row of pick-one buttons in the settings panel, used for every option of
+   that kind. Buttons are built once and only their "active" class changes
+   afterwards: rebuilding them inside the click would detach the button that
+   was clicked, and the outside-click handler would then read it as a click
+   outside the settings panel and close it. */
+function renderChoiceRow(row, options, active, onPick) {
+  if (!row.children.length) {
+    options.forEach((opt) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "layout-option";
+      btn.dataset.id = opt.id;
+      btn.textContent = opt.label;
+      btn.addEventListener("click", () => onPick(opt.id));
+      row.appendChild(btn);
+    });
+  }
+  for (const btn of row.children) btn.classList.toggle("active", btn.dataset.id === active);
 }
 
 /* ---------- Clock ---------- */
@@ -116,18 +167,10 @@ searchForm.addEventListener("submit", (e) => {
 const engineRow = document.getElementById("engine-row");
 
 function renderEngineOptions(active) {
-  engineRow.innerHTML = "";
-  ENGINES.forEach((eng) => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "layout-option" + (eng.id === active ? " active" : "");
-    btn.textContent = eng.label;
-    btn.addEventListener("click", async () => {
-      searchEngine = eng;
-      await storageSet({ [STORAGE_KEYS.engine]: eng.id });
-      renderEngineOptions(eng.id);
-    });
-    engineRow.appendChild(btn);
+  renderChoiceRow(engineRow, ENGINES, active, async (id) => {
+    searchEngine = ENGINES.find((e) => e.id === id);
+    renderEngineOptions(id);
+    await storageSet({ [STORAGE_KEYS.engine]: id });
   });
 }
 
@@ -337,6 +380,14 @@ function renderTiles() {
       const y = e.detail === 0 ? rect.top + rect.height / 2 : e.clientY;
       spawnRipple(el, x, y);
       if (tile) {
+        // Ctrl-click (Cmd on macOS) opens in a new tab, matching how every
+        // browser treats a link. No navigation delay here — this tab stays put,
+        // so there is nothing for the ripple to play out against.
+        if (e.ctrlKey || e.metaKey) {
+          e.preventDefault();
+          window.open(tile.url, "_blank");
+          return;
+        }
         setTimeout(() => {
           window.location.href = tile.url;
         }, 260);
@@ -548,6 +599,7 @@ document.getElementById("export-btn").addEventListener("click", async () => {
     STORAGE_KEYS.engine,
     STORAGE_KEYS.clockFormat,
     STORAGE_KEYS.glassIcons,
+    STORAGE_KEYS.appearance,
   ]);
   const payload = {
     app: "frostpane",
@@ -560,6 +612,7 @@ document.getElementById("export-btn").addEventListener("click", async () => {
       engine: stored[STORAGE_KEYS.engine] || ENGINES[0].id,
       clockFormat: stored[STORAGE_KEYS.clockFormat] !== undefined ? stored[STORAGE_KEYS.clockFormat] : true,
       glassIcons: stored[STORAGE_KEYS.glassIcons] !== undefined ? stored[STORAGE_KEYS.glassIcons] : true,
+      appearance: sanitizeAppearance(stored[STORAGE_KEYS.appearance]),
     },
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
@@ -642,6 +695,13 @@ async function applyImportedSettings(s) {
     writes[STORAGE_KEYS.glassIcons] = s.glassIcons;
   }
 
+  // Backups from before the appearance settings existed simply have no block
+  if (s.appearance && typeof s.appearance === "object") {
+    appearance = sanitizeAppearance(s.appearance, appearance); // bad fields keep their current value
+    applyAppearance();
+    writes[STORAGE_KEYS.appearance] = appearance;
+  }
+
   if (Object.keys(writes).length) await storageSet(writes);
 }
 
@@ -691,19 +751,11 @@ function applyLayout(layoutId) {
 }
 
 function renderLayoutOptions(active) {
-  layoutRow.innerHTML = "";
-  LAYOUTS.forEach((l) => {
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "layout-option" + (l.id === active ? " active" : "");
-    btn.textContent = l.label;
-    btn.addEventListener("click", async () => {
-      applyLayout(l.id);
-      await storageSet({ [STORAGE_KEYS.layout]: l.id });
-      renderLayoutOptions(l.id);
-      renderTiles();
-    });
-    layoutRow.appendChild(btn);
+  renderChoiceRow(layoutRow, LAYOUTS, active, async (id) => {
+    applyLayout(id);
+    renderLayoutOptions(id);
+    renderTiles();
+    await storageSet({ [STORAGE_KEYS.layout]: id });
   });
 }
 
@@ -747,6 +799,126 @@ async function loadGlassIcons() {
   const data = await storageGet(STORAGE_KEYS.glassIcons);
   const stored = data[STORAGE_KEYS.glassIcons];
   applyGlassIcons(stored !== undefined ? stored : true);
+}
+
+/* ---------- Appearance: background, sky, grain, clock face ----------
+   Every choice here is independent, so they mix freely: any background with
+   or without grain or motion, under any clock face. */
+const bgRow = document.getElementById("bg-row");
+const skyRow = document.getElementById("sky-row");
+const clockFaceRow = document.getElementById("clock-face-row");
+const bgMotionToggle = document.getElementById("bg-motion-toggle");
+const grainToggle = document.getElementById("grain-toggle");
+const clockColorRow = document.getElementById("clock-color-row");
+const clockColorAuto = document.getElementById("clock-color-auto");
+const clockColorTrigger = document.getElementById("clock-color-trigger");
+const clockColorChip = document.getElementById("clock-color-chip");
+
+let appearance = { ...APPEARANCE_DEFAULTS };
+
+/* Sky colours through the day: [minute, top, middle, bottom, star opacity].
+   The live sky is interpolated between the two nearest rows, so it moves a
+   little every minute instead of jumping between a few fixed looks. */
+const SKY_STOPS = [
+  [0, "#05060d", "#0b1026", "#1a2145", 1],
+  [300, "#0d1230", "#2a2a5c", "#5a4a7a", 0.6],
+  [390, "#2b3a7a", "#b0688f", "#f2a48b", 0.05],
+  [540, "#1f4f96", "#3f7fc4", "#8dbbe0", 0],
+  [780, "#1b4c94", "#3a79c2", "#86b8e0", 0],
+  [1020, "#24508f", "#6686b8", "#dcae88", 0],
+  [1140, "#2a1f5c", "#a2507a", "#f0926a", 0.05],
+  [1230, "#141238", "#3a2a66", "#7a4a78", 0.5],
+  [1440, "#05060d", "#0b1026", "#1a2145", 1],
+];
+const SKY_PHASE_MINUTE = { dawn: 390, day: 780, dusk: 1140, night: 0 };
+
+function mixHex(a, b, t) {
+  const pa = parseInt(a.slice(1), 16);
+  const pb = parseInt(b.slice(1), 16);
+  const ch = (shift) => Math.round(((pa >> shift) & 255) + (((pb >> shift) & 255) - ((pa >> shift) & 255)) * t);
+  return `rgb(${ch(16)}, ${ch(8)}, ${ch(0)})`;
+}
+
+function skyAt(minute) {
+  let i = 0;
+  while (i < SKY_STOPS.length - 2 && minute >= SKY_STOPS[i + 1][0]) i++;
+  const from = SKY_STOPS[i];
+  const to = SKY_STOPS[i + 1];
+  const t = (minute - from[0]) / (to[0] - from[0]);
+  return {
+    top: mixHex(from[1], to[1], t),
+    mid: mixHex(from[2], to[2], t),
+    bottom: mixHex(from[3], to[3], t),
+    stars: from[4] + (to[4] - from[4]) * t,
+  };
+}
+
+function updateSky() {
+  if (appearance.background !== "sky") return;
+  const now = new Date();
+  const minute = appearance.skyPhase === "auto"
+    ? now.getHours() * 60 + now.getMinutes()
+    : SKY_PHASE_MINUTE[appearance.skyPhase];
+  const sky = skyAt(minute);
+  const root = document.documentElement.style;
+  root.setProperty("--sky-top", sky.top);
+  root.setProperty("--sky-mid", sky.mid);
+  root.setProperty("--sky-bottom", sky.bottom);
+  root.setProperty("--sky-stars", sky.stars.toFixed(2));
+}
+setInterval(updateSky, 60 * 1000);
+
+function applyAppearance() {
+  document.body.setAttribute("data-bg", appearance.background);
+  document.body.setAttribute("data-bg-motion", appearance.bgMotion ? "on" : "off");
+  document.body.setAttribute("data-grain", appearance.grain ? "on" : "off");
+  document.body.setAttribute("data-clock", appearance.clockFace);
+  bgMotionToggle.checked = appearance.bgMotion;
+  grainToggle.checked = appearance.grain;
+  skyRow.hidden = appearance.background !== "sky";
+  const customClock = !!appearance.clockColor;
+  document.body.setAttribute("data-clock-color", customClock ? "custom" : "auto");
+  if (customClock) document.documentElement.style.setProperty("--clock-color", appearance.clockColor);
+  else document.documentElement.style.removeProperty("--clock-color");
+  clockColorAuto.classList.toggle("active", !customClock);
+  clockColorTrigger.classList.toggle("active", customClock);
+  clockColorChip.style.background = appearance.clockColor || "#ffffff";
+  renderChoiceRow(bgRow, BACKGROUNDS, appearance.background, (id) => setAppearance({ background: id }));
+  renderChoiceRow(skyRow, SKY_PHASES, appearance.skyPhase, (id) => setAppearance({ skyPhase: id }));
+  renderChoiceRow(clockFaceRow, CLOCK_FACES, appearance.clockFace, (id) => setAppearance({ clockFace: id }));
+  updateSky();
+}
+
+async function setAppearance(patch) {
+  appearance = { ...appearance, ...patch };
+  applyAppearance();
+  await storageSet({ [STORAGE_KEYS.appearance]: appearance });
+}
+
+/* Keeps only recognised values, so a stale or hand-edited record can never
+   put the page into a state the stylesheet has no rules for. */
+function sanitizeAppearance(raw, base = APPEARANCE_DEFAULTS) {
+  const a = { ...base };
+  if (!raw || typeof raw !== "object") return a;
+  if (BACKGROUNDS.some((b) => b.id === raw.background)) a.background = raw.background;
+  if (SKY_PHASES.some((p) => p.id === raw.skyPhase)) a.skyPhase = raw.skyPhase;
+  if (CLOCK_FACES.some((c) => c.id === raw.clockFace)) a.clockFace = raw.clockFace;
+  if (typeof raw.bgMotion === "boolean") a.bgMotion = raw.bgMotion;
+  if (typeof raw.grain === "boolean") a.grain = raw.grain;
+  if (raw.clockColor === null || /^#[0-9a-f]{6}$/i.test(raw.clockColor || "")) a.clockColor = raw.clockColor;
+  return a;
+}
+
+bgMotionToggle.addEventListener("change", () => setAppearance({ bgMotion: bgMotionToggle.checked }));
+grainToggle.addEventListener("change", () => setAppearance({ grain: grainToggle.checked }));
+
+async function loadAppearance() {
+  const data = await storageGet(STORAGE_KEYS.appearance);
+  appearance = sanitizeAppearance(data[STORAGE_KEYS.appearance]);
+  applyAppearance();
+  // Two frames later the first paint has happened with the right background,
+  // so it is safe to let later changes cross-fade.
+  requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.add("bg-ready")));
 }
 
 /* ---------- Accent colour ---------- */
@@ -831,6 +1003,23 @@ const colorHexInput = document.getElementById("color-hex-input");
 
 let pickerHsv = { h: 228, s: 0.61, v: 0.86 };
 
+/* One picker serves two colours. It is moved under whichever control opened
+   it, and pickerTarget decides which chip it paints and where a pick is saved. */
+let pickerTarget = "accent";
+
+function openPickerFor(target, hex, anchor) {
+  if (pickerTarget === target && !colorPicker.hidden) {
+    colorPicker.hidden = true;
+    return;
+  }
+  pickerTarget = target;
+  anchor.insertAdjacentElement("afterend", colorPicker);
+  const { r, g, b } = hexToRgb(hex);
+  pickerHsv = rgbToHsv(r, g, b);
+  renderPickerUI();
+  colorPicker.hidden = false;
+}
+
 function currentPickerHex() {
   const { r, g, b } = hsvToRgb(pickerHsv.h, pickerHsv.s, pickerHsv.v);
   return rgbToHex(r, g, b);
@@ -842,7 +1031,7 @@ function renderPickerUI() {
   colorHueThumb.style.left = `${(pickerHsv.h / 360) * 100}%`;
   colorSv.style.backgroundColor = `hsl(${pickerHsv.h}, 100%, 50%)`;
   const hex = currentPickerHex();
-  customColorChip.style.background = hex;
+  (pickerTarget === "clock" ? clockColorChip : customColorChip).style.background = hex;
   if (document.activeElement !== colorHexInput) {
     colorHexInput.value = hex.slice(1).toUpperCase();
   }
@@ -850,12 +1039,21 @@ function renderPickerUI() {
 
 async function commitPickerColor() {
   const hex = currentPickerHex();
+  if (pickerTarget === "clock") {
+    await setAppearance({ clockColor: hex });
+    return;
+  }
   applyAccent(hex, hex);
   await storageSet({ [STORAGE_KEYS.accent]: { accent: hex, soft: hex } });
   renderSwatches(null);
 }
 
+/* Called whenever the accent changes from outside the picker (a preset, a
+   restore). The accent chip always follows; the picker's own position only
+   follows while it is the accent that the picker is editing. */
 function syncPickerUI(hex) {
+  customColorChip.style.background = hex;
+  if (pickerTarget !== "accent") return;
   const { r, g, b } = hexToRgb(hex);
   pickerHsv = rgbToHsv(r, g, b);
   renderPickerUI();
@@ -899,14 +1097,27 @@ colorHexInput.addEventListener("input", () => {
   const clean = colorHexInput.value.replace(/[^0-9a-fA-F]/g, "").slice(0, 6);
   if (clean.length !== colorHexInput.value.length) colorHexInput.value = clean;
   if (clean.length === 6) {
-    syncPickerUI(`#${clean}`);
+    const { r, g, b } = hexToRgb(`#${clean}`);
+    pickerHsv = rgbToHsv(r, g, b);
+    renderPickerUI();
     commitPickerColor();
   }
 });
 
 customColorTrigger.addEventListener("click", (e) => {
   e.stopPropagation();
-  colorPicker.hidden = !colorPicker.hidden;
+  const accent = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+  openPickerFor("accent", accent, customColorTrigger);
+});
+
+clockColorTrigger.addEventListener("click", (e) => {
+  e.stopPropagation();
+  openPickerFor("clock", appearance.clockColor || "#ffffff", clockColorRow);
+});
+
+clockColorAuto.addEventListener("click", () => {
+  if (pickerTarget === "clock") colorPicker.hidden = true;
+  setAppearance({ clockColor: null });
 });
 
 const colorPickerDone = document.getElementById("color-picker-done");
@@ -926,6 +1137,7 @@ async function loadAccent() {
 
 /* ---------- Init ---------- */
 (async function init() {
+  await loadAppearance(); // first, so the chosen background is there for the first paint
   await loadGlassIcons(); // before any tile paints, so the icon finish never flashes
   await loadFaviconCache();
   await loadTiles();

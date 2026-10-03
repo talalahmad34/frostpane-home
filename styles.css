@@ -73,6 +73,227 @@ body {
   100% { transform: translate(6%, -14%) scale(1.05); }
 }
 
+/* ---------- Selectable backgrounds ----------
+   Glow (the original), Sky, and Aurora are stacked fixed layers; body[data-bg]
+   decides which one is visible. Layers that are not showing have their
+   animations paused so only the active one costs anything. */
+@property --sky-top {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #2a1f5c;
+}
+@property --sky-mid {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #a2507a;
+}
+@property --sky-bottom {
+  syntax: "<color>";
+  inherits: true;
+  initial-value: #f0926a;
+}
+
+.sky,
+.aurora,
+.grain {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0;
+  overflow: hidden;
+}
+
+/* Cross-fade only after the stored choice has been applied, so opening a new
+   tab never shows the default background fading into the chosen one. */
+body.bg-ready .glow,
+body.bg-ready .sky,
+body.bg-ready .aurora,
+body.bg-ready .grain {
+  transition: opacity 0.6s ease;
+}
+
+body:not([data-bg="glow"]) .glow {
+  opacity: 0;
+}
+body:not([data-bg="glow"]) .glow::before,
+body:not([data-bg="glow"]) .glow::after,
+body:not([data-bg="sky"]) .sky-haze::before,
+body:not([data-bg="sky"]) .sky-haze::after,
+body:not([data-bg="sky"]) .sky-stars::after,
+body:not([data-bg="aurora"]) .aurora span,
+body[data-bg-motion="off"] .glow::before,
+body[data-bg-motion="off"] .glow::after,
+body[data-bg-motion="off"] .sky-haze::before,
+body[data-bg-motion="off"] .sky-haze::after,
+body[data-bg-motion="off"] .sky-stars::after,
+body[data-bg-motion="off"] .aurora span {
+  animation-play-state: paused;
+}
+
+/* Sky — three colours driven from script by the time of day (or a pinned phase) */
+body[data-bg="sky"] .sky {
+  opacity: 1;
+}
+
+.sky {
+  background: linear-gradient(to bottom, var(--sky-top) 0%, var(--sky-mid) 55%, var(--sky-bottom) 100%);
+}
+
+body.bg-ready .sky {
+  transition: opacity 0.6s ease, --sky-top 1.2s ease, --sky-mid 1.2s ease, --sky-bottom 1.2s ease;
+}
+
+.sky-stars,
+.sky-stars::after {
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%, #fff, transparent),
+    radial-gradient(1px 1px at 31% 9%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 47% 22%, #fff, transparent),
+    radial-gradient(1px 1px at 63% 12%, #fff, transparent),
+    radial-gradient(1px 1px at 78% 27%, #fff, transparent),
+    radial-gradient(1.5px 1.5px at 89% 8%, #fff, transparent),
+    radial-gradient(1px 1px at 22% 38%, #fff, transparent),
+    radial-gradient(1px 1px at 56% 41%, #fff, transparent),
+    radial-gradient(1px 1px at 92% 44%, #fff, transparent);
+  background-size: 50% 60%;
+}
+
+.sky-stars {
+  opacity: var(--sky-stars, 0);
+  transition: opacity 1.2s ease;
+}
+
+.sky-stars::after {
+  content: "";
+  background-position: 23% 31%;
+  background-size: 37% 47%;
+  animation: sky-twinkle 5s ease-in-out infinite alternate;
+}
+
+@keyframes sky-twinkle {
+  from { opacity: 0.15; }
+  to { opacity: 0.9; }
+}
+
+.sky-haze {
+  position: absolute;
+  inset: -10%;
+  filter: blur(70px);
+}
+
+.sky-haze::before,
+.sky-haze::after {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  will-change: transform;
+}
+
+.sky-haze::before {
+  background: radial-gradient(34% 30% at 28% 62%, color-mix(in srgb, var(--sky-bottom) 70%, transparent), transparent 70%);
+  animation: glow-drift-a 26s ease-in-out infinite alternate;
+}
+
+.sky-haze::after {
+  background: radial-gradient(30% 28% at 74% 40%, color-mix(in srgb, var(--sky-mid) 60%, transparent), transparent 72%);
+  animation: glow-drift-b 32s ease-in-out infinite alternate;
+}
+
+/* Aurora — four drifting colour fields that stay inside the accent pair (the
+   two accent colours, a blend of them, and a deeper shade), so it never
+   introduces a hue the accent picker did not choose */
+body[data-bg="aurora"] .aurora {
+  opacity: 1;
+}
+
+.aurora {
+  background: #0a0b12;
+}
+
+.aurora span {
+  position: absolute;
+  width: 68vmax;
+  height: 68vmax;
+  border-radius: 50%;
+  filter: blur(70px);
+  opacity: 0.95;
+  will-change: transform;
+}
+
+.aurora span:nth-child(1) {
+  left: -16vmax;
+  top: -22vmax;
+  background: radial-gradient(circle, var(--accent) 0%, transparent 66%);
+  animation: aurora-a 24s ease-in-out infinite alternate;
+}
+
+.aurora span:nth-child(2) {
+  right: -18vmax;
+  top: -20vmax;
+  background: radial-gradient(circle, var(--accent-soft) 0%, transparent 66%);
+  animation: aurora-b 30s ease-in-out infinite alternate;
+}
+
+.aurora span:nth-child(3) {
+  right: -8vmax;
+  bottom: -30vmax;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 55%, var(--accent-soft)) 0%, transparent 66%);
+  animation: aurora-c 27s ease-in-out infinite alternate;
+}
+
+.aurora span:nth-child(4) {
+  left: -20vmax;
+  bottom: -28vmax;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent) 70%, #0a0b12) 0%, transparent 66%);
+  animation: aurora-d 34s ease-in-out infinite alternate;
+}
+
+@keyframes aurora-a {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(18vmax, 10vmax) scale(1.2); }
+  100% { transform: translate(6vmax, 22vmax) scale(0.9); }
+}
+@keyframes aurora-b {
+  0% { transform: translate(0, 0) scale(1.1); }
+  50% { transform: translate(-20vmax, 14vmax) scale(0.9); }
+  100% { transform: translate(-8vmax, 4vmax) scale(1.2); }
+}
+@keyframes aurora-c {
+  0% { transform: translate(0, 0) scale(0.95); }
+  50% { transform: translate(-16vmax, -14vmax) scale(1.2); }
+  100% { transform: translate(-28vmax, -4vmax) scale(1); }
+}
+@keyframes aurora-d {
+  0% { transform: translate(0, 0) scale(1.15); }
+  50% { transform: translate(20vmax, -12vmax) scale(0.9); }
+  100% { transform: translate(10vmax, -24vmax) scale(1.1); }
+}
+
+/* Film grain — an optional texture over whichever background is showing */
+body[data-grain="on"] .grain {
+  opacity: 0.22;
+}
+
+.grain {
+  mix-blend-mode: overlay;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Sky and Aurora are far brighter than the glow, so the glass gets a darker
+   tint and the secondary text is lifted to stay readable over them. */
+body:not([data-bg="glow"]) .homescreen-card {
+  background: rgba(12, 14, 22, 0.34);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+body:not([data-bg="glow"]) .greeting {
+  color: rgba(255, 255, 255, 0.72);
+}
+body:not([data-bg="glow"]) .date {
+  color: rgba(255, 255, 255, 0.74);
+}
+
 .panel {
   position: relative;
   height: 100vh;
@@ -164,6 +385,54 @@ html.ready .settings-widget {
 @keyframes clock-colon-pulse {
   0%, 100% { opacity: 1; }
   50% { opacity: 0.25; }
+}
+
+/* Clock faces — "light" is the default styling above. Serif and mono use fonts
+   that ship with the OS, so nothing extra is bundled. */
+body[data-clock="serif"] .clock {
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 400;
+  letter-spacing: -0.01em;
+}
+
+body[data-clock="mono"] .clock {
+  font-family: "Cascadia Code", "SF Mono", Menlo, Consolas, monospace;
+  font-weight: 300;
+  letter-spacing: -0.05em;
+}
+
+/* A monospaced colon takes a full character cell, which reads as a gap */
+body[data-clock="mono"] .clock-colon {
+  margin: 0 -0.16em;
+}
+
+body[data-clock="bold"] .clock {
+  font-weight: 700;
+  letter-spacing: -0.05em;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent) 60%, white), color-mix(in srgb, var(--accent-soft) 60%, white));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+body[data-clock="serif"] .clock-meridiem,
+body[data-clock="mono"] .clock-meridiem,
+body[data-clock="bold"] .clock-meridiem {
+  font-family: "Manrope", system-ui, sans-serif;
+  letter-spacing: 0.04em;
+}
+
+/* A chosen clock colour overrides every face's own colouring, including the
+   Bold face's accent gradient. Must stay after the face rules above. */
+body[data-clock-color="custom"] .clock {
+  color: var(--clock-color);
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+}
+
+body[data-clock-color="custom"] .clock-meridiem {
+  color: color-mix(in srgb, var(--clock-color) 60%, transparent);
 }
 
 .clock-meridiem {
@@ -636,6 +905,16 @@ body[data-glass-icons="off"] .tile-icon::after {
   display: flex;
   flex-direction: column;
   gap: 16px;
+  /* The panel is taller than a small window now — scroll inside it rather
+     than running off the top of the screen */
+  max-height: calc(100vh - 96px);
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.18) transparent;
+}
+
+.settings-section {
+  flex-shrink: 0;
 }
 
 .settings-panel[hidden] {
@@ -753,6 +1032,30 @@ body[data-glass-icons="off"] .tile-icon::after {
   gap: 8px;
 }
 
+.choice-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.choice-row[hidden] {
+  display: none;
+}
+
+.choice-row .layout-option {
+  flex: 1 1 0;
+}
+
+/* Five sky phases have to share one line of a 240px panel */
+.choice-row-tight {
+  gap: 5px;
+}
+
+.choice-row-tight .layout-option {
+  padding: 7px 2px;
+  font-size: 10px;
+}
+
 .layout-option {
   flex: 1;
   font-family: inherit;
@@ -818,6 +1121,35 @@ body[data-glass-icons="off"] .tile-icon::after {
 }
 
 .swatch-custom:hover .custom-color-chip {
+  transform: scale(1.06);
+}
+
+.clock-color-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.clock-color-controls .layout-option {
+  flex: none;
+  padding: 5px 12px;
+}
+
+.clock-color-trigger {
+  display: flex;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.clock-color-trigger.active .custom-color-chip {
+  border-color: color-mix(in srgb, var(--accent) 70%, white 15%);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent) 35%, transparent);
+}
+
+.clock-color-trigger:hover .custom-color-chip {
   transform: scale(1.06);
 }
 
