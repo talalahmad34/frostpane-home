@@ -853,8 +853,29 @@ function skyAt(minute) {
   };
 }
 
+/* Stars are individual elements so each can twinkle on its own beat. Built
+   the first time the sky is shown, with a fresh scatter on every new tab. */
+const skyStars = document.getElementById("sky-stars");
+
+function buildStars() {
+  if (skyStars.children.length) return;
+  const frag = document.createDocumentFragment();
+  for (let i = 0; i < 90; i++) {
+    const star = document.createElement("i");
+    const size = Math.random() < 0.15 ? 2.6 : 1 + Math.random() * 0.9;
+    star.style.left = `${(Math.random() * 100).toFixed(2)}%`;
+    star.style.top = `${(Math.random() * 72).toFixed(2)}%`;
+    star.style.width = star.style.height = `${size.toFixed(1)}px`;
+    star.style.animationDuration = `${(1.2 + Math.random() * 2.8).toFixed(2)}s`;
+    star.style.animationDelay = `${(-Math.random() * 4).toFixed(2)}s`;
+    frag.appendChild(star);
+  }
+  skyStars.appendChild(frag);
+}
+
 function updateSky() {
   if (appearance.background !== "sky") return;
+  buildStars();
   const now = new Date();
   const minute = appearance.skyPhase === "auto"
     ? now.getHours() * 60 + now.getMinutes()
@@ -866,7 +887,13 @@ function updateSky() {
   root.setProperty("--sky-bottom", sky.bottom);
   root.setProperty("--sky-stars", sky.stars.toFixed(2));
   // Clouds thin out as the stars come up, so the night sky stays dark
-  root.setProperty("--sky-clouds", (1 - sky.stars * 0.75).toFixed(2));
+  root.setProperty("--sky-clouds", (1 - sky.stars * 0.7).toFixed(2));
+  // Daylight is gone well before the sky is fully dark
+  const day = Math.max(0, 1 - sky.stars * 3);
+  root.setProperty("--sky-day", day.toFixed(2));
+  // Lets the stylesheet rest whichever half of the cast is not on stage
+  document.body.setAttribute("data-sky-stars", sky.stars > 0.02 ? "on" : "off");
+  document.body.setAttribute("data-sky-sun", day > 0.02 ? "on" : "off");
 }
 setInterval(updateSky, 60 * 1000);
 

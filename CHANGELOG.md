@@ -2,6 +2,12 @@
 
 All notable changes to Frostpane are documented here.
 
+## [1.3.2] — 2026-10-04
+
+### Changed
+- The Sky background now plays out like a scene. Opening a tab by day starts with a soft sun glare and slowly turning light beams, then clouds fade in and flocks of birds cross the sky. By night each star twinkles on its own rhythm, a moon hangs in the corner, and shooting stars streak past every few seconds, the first within a second of opening
+- Clouds are more defined and move faster
+
 ## [1.3.1] — 2026-10-03
 
 ### Changed

@@ -4,43 +4,60 @@
 
 # Frostpane
 
-**A calm, glass-textured new tab page for Chrome and Brave.**
+**A calm, glass-textured new tab page for Chrome, Brave, and other Chromium browsers.**
 
-A live clock, quick search, and a 12-tile bookmark grid — wrapped in a soft, animated frosted-glass surface with three selectable layouts. Even the bookmark icons are finished in frosted glass, so the whole page reads as one calm surface rather than a wall of brand colors.
+A live clock, quick search, and twelve bookmarks on a frosted-glass card, over a background that moves.
 
-[![Release](https://img.shields.io/badge/release-v1.3.1-6d78e8?style=flat-square)](../../releases/latest)
+[![Release](https://img.shields.io/badge/release-v1.3.2-6d78e8?style=flat-square)](../../releases/latest)
 [![License: MIT](https://img.shields.io/badge/license-MIT-6d78e8?style=flat-square)](LICENSE)
 [![Manifest V3](https://img.shields.io/badge/manifest-v3-6d78e8?style=flat-square)](manifest.json)
 [![No dependencies](https://img.shields.io/badge/dependencies-none-6d78e8?style=flat-square)](#tech)
 
 <br />
 
-<img src="screenshots/stack.png" width="720" alt="Frostpane — Open Stack layout" />
+<img src="screenshots/sky-day.png" width="820" alt="Frostpane with the Sky background by day: sun, clouds, and birds behind the frosted card" />
 
 </div>
 
 <br />
 
-## Features
+## Highlights
 
-- **Three layouts** — pick the shape that fits how you browse
-- **Three backgrounds** — the original soft Glow, a Sky that follows the clock from dawn to a starlit night with drifting clouds and shooting stars, or a drifting Aurora built from your accent, each with optional film grain and a switch to freeze the motion
-- **Four clock faces** — Light, Serif, Mono, or Bold with an accent gradient, in any colour you pick
-- **Glass icons** — bookmark favicons are desaturated and given a soft specular sheen so the grid reads as one pane of glass; full color returns on the tile you hover, and a settings toggle restores the original logos
-- **Search engine switcher** — Brave, Google, DuckDuckGo, or Startpage, picked from settings
-- **Drag-to-reorder bookmarks** — drag any tile onto another to swap their places, even into an empty slot
-- **Live clock** with a 12/24-hour toggle, a softly pulsing colon, auto date, and time-aware greeting
-- **Accent themes** — six curated presets plus a custom color picker, rendered as a soft dual-tone glow behind the page
-- **12-tile bookmark grid** — click to open, right-click to edit
-- **Liquid-glass hover glow** — a cursor-tracked specular highlight sweeps across the frosted card, search bar, and tiles as you move the mouse
-- **Frosted, animated bookmark editor** — the add/edit modal opens and closes with a soft blur-and-scale transition
-- **Cached favicons** — each icon is fetched once per domain and cached locally, so new tabs load instantly with no repeat network calls, with an automatic root-domain fallback for subdomains like `web.whatsapp.com`. The cache is pruned as bookmarks change, so it never grows unbounded
-- **Full keyboard navigation** — arrow keys move between bookmarks and the search bar, `Enter`/`Space` opens the focused tile
-- **Ctrl-click or middle-click** any bookmark to open it in a new tab
-- **Liquid ripple** feedback on click, subtle lift-and-zoom on hover
-- **Export / Import** your whole setup as JSON — bookmarks plus accent, layout, search engine, and toggles
-- **Respects reduce motion** — every animation stands down when your system asks for less movement
-- **Hover-revealed settings** — nothing on screen until you ask for it
+- **Three backgrounds** — a soft Glow, a living Sky, or a drifting Aurora
+- **Four clock faces** in any colour you pick
+- **Three layouts**, from a roomy grid to a minimal dock
+- **Twelve bookmarks** with frosted-glass icons, reordered by dragging
+- **Quick search** through Brave, Google, DuckDuckGo, or Startpage
+- **Nothing on screen until you ask** — settings appear on hover, and everything is saved in your browser
+
+<br />
+
+## Backgrounds
+
+<table>
+<tr>
+<td align="center" width="50%">
+<img src="screenshots/sky-dusk.png" width="100%" alt="Sky background at dusk" /><br />
+<sub><b>Sky</b> — follows the clock through dawn, day, and dusk, with a sun glare on opening, drifting clouds, and passing birds</sub>
+</td>
+<td align="center" width="50%">
+<img src="screenshots/sky-night.png" width="100%" alt="Sky background at night" /><br />
+<sub><b>Sky at night</b> — twinkling stars, a moon, and shooting stars</sub>
+</td>
+</tr>
+<tr>
+<td align="center" width="50%">
+<img src="screenshots/aurora.png" width="100%" alt="Aurora background" /><br />
+<sub><b>Aurora</b> — slow colour fields built from your accent colour</sub>
+</td>
+<td align="center" width="50%">
+<img src="screenshots/stack.png" width="100%" alt="Glow background" /><br />
+<sub><b>Glow</b> — the original: a dark page with two soft drifting lights</sub>
+</td>
+</tr>
+</table>
+
+Sky can follow the time of day or stay pinned to one phase. Any background can take a film-grain texture, and one switch freezes the motion without changing the look.
 
 <br />
 
@@ -58,16 +75,54 @@ A live clock, quick search, and a 12-tile bookmark grid — wrapped in a soft, a
 </td>
 <td align="center" width="34%">
 <img src="screenshots/dock.png" width="100%" alt="Quiet Dock layout" /><br />
-<sub><b>Quiet Dock</b> — a minimal icon strip, clock as anchor, names on hover</sub>
+<sub><b>Quiet Dock</b> — a minimal icon strip, names on hover</sub>
 </td>
 </tr>
 </table>
 
-Switch between them any time from the settings panel, which appears on hover in the bottom-right corner:
+<br />
+
+## Settings
+
+Hover the bottom-right corner for the settings panel. It stays open while you change things, so every option previews live.
 
 <div align="center">
-<img src="screenshots/settings.png" width="640" alt="Settings panel" />
+<img src="screenshots/settings.png" width="760" alt="Settings panel open over the Sky background" />
 </div>
+
+<br />
+
+## Everything it does
+
+<details>
+<summary><b>Look and feel</b></summary>
+
+- **Accent colour** — six presets or any colour from the built-in picker
+- **Clock faces** — Light, Serif, Mono, or Bold with an accent gradient, plus an optional clock colour
+- **Glass icons** — bookmark icons are desaturated and given a soft sheen so the grid reads as one pane of glass; full colour returns on the tile you hover, and a switch restores the original logos
+- **Liquid-glass highlights** — a soft light follows the cursor across the card, search bar, and tiles
+- **12 or 24-hour clock**, with the date and a greeting that matches the time of day
+- **Respects reduce motion** — every animation stands down when your system asks for less movement
+
+</details>
+
+<details>
+<summary><b>Bookmarks</b></summary>
+
+- Click a tile to open it, right-click to edit, click an empty tile to add
+- Drag one tile onto another to swap them, including into an empty slot
+- Ctrl-click or middle-click opens a bookmark in a new tab
+- Icons are fetched once and cached, so new tabs open instantly; the cache cleans itself up as bookmarks change
+
+</details>
+
+<details>
+<summary><b>Backup</b></summary>
+
+- **Export** saves your bookmarks and every setting to one JSON file
+- **Import** restores it wherever Frostpane is installed; bookmark files from older versions still work
+
+</details>
 
 <br />
 
@@ -93,14 +148,14 @@ Frostpane isn't on the Chrome Web Store — install it as an unpacked extension:
    ```
 2. Open `chrome://extensions` (or `brave://extensions`)
 3. Enable **Developer mode** (top right)
-4. Click **Load unpacked** and select the `frostpane-home` folder
+4. Click **Load unpacked** and select the unzipped folder (or the cloned `frostpane-home` folder)
 5. Open a new tab
 
 <br />
 
 ## Tech
 
-No build step, no framework — vanilla HTML, CSS, and JavaScript, backed by `chrome.storage.local` for persistence. Manifest V3.
+No build step, no framework — vanilla HTML, CSS, and JavaScript, backed by `chrome.storage.local` for persistence. Manifest V3. The only network requests are for bookmark icons.
 
 <br />
 

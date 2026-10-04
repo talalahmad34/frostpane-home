@@ -117,28 +117,45 @@ body:not([data-bg="glow"]) .glow {
 }
 body:not([data-bg="glow"]) .glow::before,
 body:not([data-bg="glow"]) .glow::after,
-body:not([data-bg="sky"]) .sky-haze::before,
-body:not([data-bg="sky"]) .sky-haze::after,
-body:not([data-bg="sky"]) .sky-stars::after,
-body:not([data-bg="sky"]) .sky-shoot,
-body:not([data-bg="sky"]) .sky-orb,
-body:not([data-bg="sky"]) .sky-clouds::before,
-body:not([data-bg="sky"]) .sky-clouds::after,
 body:not([data-bg="aurora"]) .aurora span,
+body:not([data-bg="sky"]) .sky *,
+body:not([data-bg="sky"]) .sky *::before,
+body:not([data-bg="sky"]) .sky *::after,
 body[data-bg-motion="off"] .glow::before,
 body[data-bg-motion="off"] .glow::after,
-body[data-bg-motion="off"] .sky-haze::before,
-body[data-bg-motion="off"] .sky-haze::after,
-body[data-bg-motion="off"] .sky-stars::after,
-body[data-bg-motion="off"] .sky-shoot,
-body[data-bg-motion="off"] .sky-orb,
-body[data-bg-motion="off"] .sky-clouds::before,
-body[data-bg-motion="off"] .sky-clouds::after,
-body[data-bg-motion="off"] .aurora span {
+body[data-bg-motion="off"] .aurora span,
+body[data-bg-motion="off"] .sky *,
+body[data-bg-motion="off"] .sky *::before,
+body[data-bg-motion="off"] .sky *::after,
+/* Within the sky, the night parts rest by day and the day parts rest at night */
+body:not([data-sky-stars="on"]) .sky-stars i,
+body:not([data-sky-stars="on"]) .sky-shoot,
+body:not([data-sky-sun="on"]) .sky-rays,
+body:not([data-sky-sun="on"]) .sky-rays::before,
+body:not([data-sky-sun="on"]) .sky-disc,
+body:not([data-sky-sun="on"]) .sky-flare,
+body:not([data-sky-sun="on"]) .sky-birds,
+body:not([data-sky-sun="on"]) .sky-birds i {
   animation-play-state: paused;
 }
 
-/* Sky — three colours driven from script by the time of day (or a pinned phase) */
+/* The opening animations start from invisible, so pausing them would hide the
+   thing they introduce. With motion switched off they are dropped instead and
+   the element simply shows in its resting state. */
+body[data-bg-motion="off"] .sky-clouds,
+body[data-bg-motion="off"] .sky-rays,
+body[data-bg-motion="off"] .sky-flare {
+  animation: none;
+}
+
+/* ---------- Sky ----------
+   Three colours driven from script by the time of day (or a pinned phase),
+   with a cast that changes with the light. Script also sets:
+     --sky-stars  0..1  how dark the sky is (stars, moon, shooting stars)
+     --sky-day    0..1  how much daylight there is (sun, beams, birds)
+     --sky-clouds 0..1  cloud strength, thinner at night
+   Opening a tab by day plays a short sequence: a sun glare and beams first,
+   then the clouds fade in, then the first birds cross. */
 body[data-bg="sky"] .sky {
   opacity: 1;
 }
@@ -151,126 +168,162 @@ body.bg-ready .sky {
   transition: opacity 0.6s ease, --sky-top 1.2s ease, --sky-mid 1.2s ease, --sky-bottom 1.2s ease;
 }
 
-.sky-stars,
-.sky-stars::after {
+/* Stars — each one is its own element (built in script) with its own rhythm,
+   so the field shimmers instead of pulsing as one sheet */
+.sky-stars {
   position: absolute;
   inset: 0;
-  background-image:
-    radial-gradient(1px 1px at 12% 18%, #fff, transparent),
-    radial-gradient(1px 1px at 31% 9%, #fff, transparent),
-    radial-gradient(1.5px 1.5px at 47% 22%, #fff, transparent),
-    radial-gradient(1px 1px at 63% 12%, #fff, transparent),
-    radial-gradient(1px 1px at 78% 27%, #fff, transparent),
-    radial-gradient(1.5px 1.5px at 89% 8%, #fff, transparent),
-    radial-gradient(1px 1px at 22% 38%, #fff, transparent),
-    radial-gradient(1px 1px at 56% 41%, #fff, transparent),
-    radial-gradient(1px 1px at 92% 44%, #fff, transparent);
-  background-size: 50% 60%;
-}
-
-.sky-stars {
   opacity: var(--sky-stars, 0);
   transition: opacity 1.2s ease;
 }
 
-.sky-stars::after {
-  content: "";
-  background-position: 23% 31%;
-  background-size: 37% 47%;
-  animation: sky-twinkle 2.6s ease-in-out infinite alternate;
+.sky-stars i {
+  position: absolute;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 5px rgba(255, 255, 255, 0.85);
+  animation: sky-twinkle 2.4s ease-in-out infinite alternate;
 }
 
 @keyframes sky-twinkle {
-  from { opacity: 0.1; }
-  to { opacity: 1; }
+  from { opacity: 0.12; transform: scale(0.6); }
+  to { opacity: 1; transform: scale(1.25); }
 }
 
-/* A shooting star every so often. It shares the stars' opacity, so it only
-   shows when the sky is dark enough to have stars at all. */
+/* Shooting stars — two, on different cycles, timed so the first one crosses
+   within a second of opening the tab. They share the stars' opacity, so they
+   only show when the sky is dark enough to have stars at all. */
 .sky-shoot {
   position: absolute;
-  top: 14%;
-  left: 62%;
-  width: 150px;
-  height: 1.5px;
+  top: 12%;
+  left: 68%;
+  width: 190px;
+  height: 2px;
   border-radius: 2px;
-  background: linear-gradient(to left, rgba(255, 255, 255, 0.95), transparent);
+  background: linear-gradient(to left, #fff, rgba(255, 255, 255, 0.5) 18%, transparent);
+  filter: drop-shadow(0 0 5px rgba(255, 255, 255, 0.9));
   transform-origin: right center;
   opacity: 0;
-  animation: sky-shoot 11s ease-in infinite;
+  animation: sky-shoot 6s ease-in -4.4s infinite;
+}
+
+.sky-shoot-b {
+  top: 5%;
+  left: 40%;
+  width: 130px;
+  animation: sky-shoot 9.5s ease-in -5s infinite;
 }
 
 @keyframes sky-shoot {
-  0%, 86% { opacity: 0; transform: translate(0, 0) rotate(-24deg) scaleX(0.2); }
-  88% { opacity: var(--sky-stars, 0); transform: translate(-4vw, 2vw) rotate(-24deg) scaleX(1); }
-  96% { opacity: 0; transform: translate(-34vw, 15vw) rotate(-24deg) scaleX(0.5); }
-  100% { opacity: 0; transform: translate(-34vw, 15vw) rotate(-24deg) scaleX(0.5); }
+  0%, 86% { opacity: 0; transform: translate(0, 0) rotate(-24deg) scaleX(0.15); }
+  88% { opacity: var(--sky-stars, 0); transform: translate(-3vw, 1.4vw) rotate(-24deg) scaleX(1); }
+  97%, 100% { opacity: 0; transform: translate(-36vw, 16vw) rotate(-24deg) scaleX(0.6); }
 }
 
-/* Sun by day, moon by night: one soft light that slowly breathes */
-.sky-orb {
+/* Sun and moon share one spot in the upper right. The wrapper is a zero-size
+   anchor so its children can be centred on it and still animate transform. */
+.sky-sun {
   position: absolute;
-  top: 6%;
-  right: 10%;
-  width: 34vmax;
-  height: 34vmax;
+  top: 15%;
+  left: 84%;
+  width: 0;
+  height: 0;
+}
+
+.sky-rays,
+.sky-disc,
+.sky-flare,
+.sky-moon {
+  position: absolute;
   border-radius: 50%;
-  background: radial-gradient(circle, color-mix(in srgb, var(--sky-bottom) 45%, white) 0%, color-mix(in srgb, var(--sky-bottom) 60%, transparent) 30%, transparent 68%);
-  filter: blur(24px);
-  opacity: 0.6;
-  will-change: transform;
-  animation: sky-orb 9s ease-in-out infinite alternate;
 }
 
-@keyframes sky-orb {
-  from { transform: translate(0, 0) scale(0.85); opacity: 0.42; }
-  to { transform: translate(-3vmax, 2vmax) scale(1.18); opacity: 0.7; }
+/* Light beams: a slowly turning fan of soft wedges, fading out from the sun */
+.sky-rays {
+  width: 150vmax;
+  height: 150vmax;
+  left: -75vmax;
+  top: -75vmax;
+  opacity: calc(var(--sky-day, 0) * 0.3);
+  -webkit-mask-image: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.55) 22%, transparent 62%);
+  mask-image: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.55) 22%, transparent 62%);
+  animation: sky-rays-in 3.4s ease-out both;
 }
 
-/* Clouds: two bands at different speeds. Each band is twice the screen wide
-   with its pattern repeated at 50%, so sliding it left by half its width
-   loops with no visible seam. */
-.sky-clouds {
-  position: absolute;
-  inset: 0;
-  opacity: var(--sky-clouds, 1);
-  transition: opacity 1.2s ease;
-  filter: blur(22px);
-}
-
-.sky-clouds::before,
-.sky-clouds::after {
+.sky-rays::before {
   content: "";
   position: absolute;
-  top: 0;
-  left: 0;
-  width: 200%;
-  height: 100%;
-  background-repeat: repeat-x;
-  background-size: 50% 100%;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(255, 244, 214, 0.5) 3deg,
+    transparent 8deg,
+    transparent 14deg,
+    rgba(255, 244, 214, 0.28) 17deg,
+    transparent 21deg,
+    transparent 30deg
+  );
+  filter: blur(8px);
   will-change: transform;
+  animation: sky-rays-turn 80s linear infinite;
 }
 
-.sky-clouds::before {
-  background-image:
-    radial-gradient(20% 7% at 16% 20%, rgba(255, 255, 255, 0.3), transparent 72%),
-    radial-gradient(14% 5% at 30% 26%, rgba(255, 255, 255, 0.22), transparent 72%),
-    radial-gradient(24% 8% at 68% 14%, rgba(255, 255, 255, 0.26), transparent 72%),
-    radial-gradient(16% 6% at 88% 32%, rgba(255, 255, 255, 0.2), transparent 72%);
-  animation: sky-clouds 70s linear infinite;
+@keyframes sky-rays-in {
+  0% { opacity: 0; }
+  28% { opacity: calc(var(--sky-day, 0) * 0.7); }
+  100% { opacity: calc(var(--sky-day, 0) * 0.3); }
 }
 
-.sky-clouds::after {
-  background-image:
-    radial-gradient(26% 9% at 8% 72%, rgba(255, 255, 255, 0.2), transparent 72%),
-    radial-gradient(18% 6% at 44% 84%, rgba(255, 255, 255, 0.24), transparent 72%),
-    radial-gradient(22% 8% at 78% 66%, rgba(255, 255, 255, 0.18), transparent 72%);
-  animation: sky-clouds 42s linear infinite;
+@keyframes sky-rays-turn {
+  to { transform: rotate(360deg); }
 }
 
-@keyframes sky-clouds {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
+/* The sun itself: a bright core that slowly breathes */
+.sky-disc {
+  width: 22vmax;
+  height: 22vmax;
+  left: -11vmax;
+  top: -11vmax;
+  background: radial-gradient(circle, #fff 0%, rgba(255, 246, 220, 0.95) 12%, rgba(255, 228, 170, 0.45) 30%, transparent 68%);
+  opacity: var(--sky-day, 0);
+  will-change: transform;
+  animation: sky-disc 7s ease-in-out infinite alternate;
+}
+
+@keyframes sky-disc {
+  from { transform: scale(0.88); }
+  to { transform: scale(1.14); }
+}
+
+/* Opening glare: one bloom that swells out of the sun and fades. It rests at
+   invisible, so it does nothing unless the animation is running. */
+.sky-flare {
+  width: 90vmax;
+  height: 90vmax;
+  left: -45vmax;
+  top: -45vmax;
+  background: radial-gradient(circle, rgba(255, 252, 240, 0.95) 0%, rgba(255, 236, 190, 0.5) 22%, transparent 62%);
+  opacity: 0;
+  animation: sky-flare 3.2s ease-out both;
+}
+
+@keyframes sky-flare {
+  0% { opacity: 0; transform: scale(0.25); }
+  20% { opacity: calc(var(--sky-day, 0) * 0.8); transform: scale(0.9); }
+  100% { opacity: 0; transform: scale(1.7); }
+}
+
+.sky-moon {
+  width: 5.5vmax;
+  height: 5.5vmax;
+  left: -2.75vmax;
+  top: -2.75vmax;
+  background: radial-gradient(circle at 36% 34%, #fffdf4 0%, #e9e6d8 55%, #c9c6ba 100%);
+  box-shadow: 0 0 5vmax 1vmax rgba(220, 228, 255, 0.28);
+  opacity: var(--sky-stars, 0);
+  transition: opacity 1.2s ease;
 }
 
 .sky-haze {
@@ -297,6 +350,112 @@ body.bg-ready .sky {
   background: radial-gradient(30% 28% at 74% 40%, color-mix(in srgb, var(--sky-mid) 75%, white), transparent 72%);
   opacity: 0.5;
   animation: glow-drift-b 19s ease-in-out infinite alternate;
+}
+
+/* Clouds: two bands at different speeds. Each band is twice the screen wide
+   with its pattern repeated at 50%, so sliding it left by half its width
+   loops with no visible seam. Each cloud is a cluster of overlapping puffs.
+   The band fades in a moment after opening, once the glare has passed. */
+.sky-clouds {
+  position: absolute;
+  inset: 0;
+  opacity: var(--sky-clouds, 1);
+  transition: opacity 1.2s ease;
+  filter: blur(11px);
+  animation: sky-clouds-in 2.6s ease-out 0.9s both;
+}
+
+@keyframes sky-clouds-in {
+  from { opacity: 0; }
+  to { opacity: var(--sky-clouds, 1); }
+}
+
+.sky-clouds::before,
+.sky-clouds::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200%;
+  height: 100%;
+  background-repeat: repeat-x;
+  background-size: 50% 100%;
+  will-change: transform;
+}
+
+.sky-clouds::before {
+  background-image:
+    radial-gradient(9% 5% at 12% 19%, rgba(255, 255, 255, 0.5), transparent 70%),
+    radial-gradient(7% 6% at 17% 16%, rgba(255, 255, 255, 0.55), transparent 70%),
+    radial-gradient(10% 4.5% at 22% 20%, rgba(255, 255, 255, 0.45), transparent 70%),
+    radial-gradient(8% 4% at 58% 11%, rgba(255, 255, 255, 0.42), transparent 70%),
+    radial-gradient(6% 5% at 63% 9%, rgba(255, 255, 255, 0.5), transparent 70%),
+    radial-gradient(9% 4% at 68% 12%, rgba(255, 255, 255, 0.4), transparent 70%),
+    radial-gradient(7% 3.5% at 90% 27%, rgba(255, 255, 255, 0.36), transparent 70%);
+  animation: sky-clouds 64s linear infinite;
+}
+
+.sky-clouds::after {
+  background-image:
+    radial-gradient(12% 6% at 6% 74%, rgba(255, 255, 255, 0.46), transparent 70%),
+    radial-gradient(9% 7% at 13% 70%, rgba(255, 255, 255, 0.52), transparent 70%),
+    radial-gradient(13% 5.5% at 20% 75%, rgba(255, 255, 255, 0.42), transparent 70%),
+    radial-gradient(10% 5% at 46% 86%, rgba(255, 255, 255, 0.44), transparent 70%),
+    radial-gradient(8% 6% at 52% 83%, rgba(255, 255, 255, 0.5), transparent 70%),
+    radial-gradient(11% 5% at 78% 66%, rgba(255, 255, 255, 0.4), transparent 70%),
+    radial-gradient(8% 6% at 84% 63%, rgba(255, 255, 255, 0.46), transparent 70%);
+  animation: sky-clouds 36s linear infinite;
+}
+
+@keyframes sky-clouds {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
+}
+
+/* Birds: two loose flocks that cross by day, the first a few seconds after
+   opening. Each bird is a small stroked "v" that flaps on its own beat. */
+.sky-birds {
+  position: absolute;
+  top: 8%;
+  left: 0;
+  width: 150px;
+  height: 80px;
+  opacity: 0;
+  will-change: transform;
+  animation: sky-birds 26s linear 3s infinite;
+}
+
+.sky-birds-far {
+  top: 3%;
+  scale: 0.6;
+  animation: sky-birds 41s linear 12s infinite;
+}
+
+@keyframes sky-birds {
+  0% { opacity: 0; transform: translate(-20vw, 3vh); }
+  3% { opacity: calc(var(--sky-day, 0) * 0.8); }
+  66% { opacity: calc(var(--sky-day, 0) * 0.8); }
+  70%, 100% { opacity: 0; transform: translate(118vw, -9vh); }
+}
+
+.sky-birds i {
+  position: absolute;
+  width: 24px;
+  height: 10px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 10'%3E%3Cpath d='M1 8 Q6 0 12 6 Q18 0 23 8' fill='none' stroke='%23141a2a' stroke-width='1.7' stroke-linecap='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  transform-origin: center 70%;
+  animation: sky-flap 0.42s ease-in-out infinite alternate;
+}
+
+.sky-birds i:nth-child(1) { left: 110px; top: 34px; }
+.sky-birds i:nth-child(2) { left: 78px; top: 18px; width: 20px; animation-delay: -0.15s; }
+.sky-birds i:nth-child(3) { left: 74px; top: 52px; width: 21px; animation-delay: -0.3s; }
+.sky-birds i:nth-child(4) { left: 40px; top: 6px; width: 18px; animation-delay: -0.08s; }
+.sky-birds i:nth-child(5) { left: 32px; top: 66px; width: 19px; animation-delay: -0.24s; }
+
+@keyframes sky-flap {
+  from { transform: scaleY(1); }
+  to { transform: scaleY(0.25) translateY(2px); }
 }
 
 /* Aurora — four drifting colour fields that stay inside the accent pair (the
