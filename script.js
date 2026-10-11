@@ -860,7 +860,7 @@ const skyStars = document.getElementById("sky-stars");
 function buildStars() {
   if (skyStars.children.length) return;
   const frag = document.createDocumentFragment();
-  for (let i = 0; i < 90; i++) {
+  for (let i = 0; i < 60; i++) {
     const star = document.createElement("i");
     const size = Math.random() < 0.15 ? 2.6 : 1 + Math.random() * 0.9;
     star.style.left = `${(Math.random() * 100).toFixed(2)}%`;
@@ -948,6 +948,12 @@ async function loadAppearance() {
   // Two frames later the first paint has happened with the right background,
   // so it is safe to let later changes cross-fade.
   requestAnimationFrame(() => requestAnimationFrame(() => document.body.classList.add("bg-ready")));
+  // Bring the sky's large layers on in steps once the page itself is up, so
+  // their first draw is spread over several frames instead of landing in the
+  // same one as the page. Their opening animations start as each appears.
+  ["sky-s1", "sky-s2", "sky-s3"].forEach((step, i) => {
+    setTimeout(() => document.body.classList.add(step), 140 + i * 180);
+  });
 }
 
 /* ---------- Accent colour ---------- */

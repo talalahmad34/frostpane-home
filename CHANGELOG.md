@@ -2,6 +2,13 @@
 
 All notable changes to Frostpane are documented here.
 
+## [1.3.3] — 2026-10-11
+
+### Changed
+- The Sky background no longer makes opening a tab hitch. The sun plays its glare and beams once as the tab opens and then rests; only the clouds and birds keep moving, and the clouds drift more slowly
+- The sky scene is brought on in steps just after the page appears, instead of being drawn in the same instant as the page
+- Lighter to draw throughout: no blur filters over moving layers, fewer stars, and bookmark tiles no longer re-blur the background on Sky and Aurora
+
 ## [1.3.2] — 2026-10-04
 
 ### Changed

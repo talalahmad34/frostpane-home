@@ -148,6 +148,24 @@ body[data-bg-motion="off"] .sky-flare {
   animation: none;
 }
 
+/* The scene is brought on in three steps a few frames apart (script adds
+   sky-s1..3 to body just after the first paint). Drawing every large layer in
+   the same frame as the page itself is what made opening a tab hitch. */
+.sky-sun,
+.sky-stars,
+.sky-clouds,
+.sky-birds,
+.sky-shoot {
+  display: none;
+}
+body.sky-s1 .sky-sun,
+body.sky-s1 .sky-stars,
+body.sky-s2 .sky-clouds,
+body.sky-s3 .sky-birds,
+body.sky-s3 .sky-shoot {
+  display: block;
+}
+
 /* ---------- Sky ----------
    Three colours driven from script by the time of day (or a pinned phase),
    with a cast that changes with the light. Script also sets:
@@ -238,12 +256,14 @@ body.bg-ready .sky {
   border-radius: 50%;
 }
 
-/* Light beams: a slowly turning fan of soft wedges, fading out from the sun */
+/* Light beams: a fan of soft wedges fading out from the sun. They swing into
+   place as the tab opens and then hold still: a layer this large is cheap
+   to show but costly to keep redrawing, and a still sun reads as calm. */
 .sky-rays {
-  width: 150vmax;
-  height: 150vmax;
-  left: -75vmax;
-  top: -75vmax;
+  width: 110vmax;
+  height: 110vmax;
+  left: -55vmax;
+  top: -55vmax;
   opacity: calc(var(--sky-day, 0) * 0.3);
   -webkit-mask-image: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.55) 22%, transparent 62%);
   mask-image: radial-gradient(circle, #000 0%, rgba(0, 0, 0, 0.55) 22%, transparent 62%);
@@ -258,16 +278,14 @@ body.bg-ready .sky {
   background: repeating-conic-gradient(
     from 0deg,
     transparent 0deg,
-    rgba(255, 244, 214, 0.5) 3deg,
-    transparent 8deg,
+    rgba(255, 244, 214, 0.34) 4deg,
+    transparent 9deg,
     transparent 14deg,
-    rgba(255, 244, 214, 0.28) 17deg,
+    rgba(255, 244, 214, 0.18) 17deg,
     transparent 21deg,
     transparent 30deg
   );
-  filter: blur(8px);
-  will-change: transform;
-  animation: sky-rays-turn 80s linear infinite;
+  animation: sky-rays-turn 4s ease-out both;
 }
 
 @keyframes sky-rays-in {
@@ -277,10 +295,11 @@ body.bg-ready .sky {
 }
 
 @keyframes sky-rays-turn {
-  to { transform: rotate(360deg); }
+  from { transform: rotate(-12deg); }
+  to { transform: rotate(0deg); }
 }
 
-/* The sun itself: a bright core that slowly breathes */
+/* The sun itself: swells once as the tab opens, then rests */
 .sky-disc {
   width: 22vmax;
   height: 22vmax;
@@ -288,22 +307,22 @@ body.bg-ready .sky {
   top: -11vmax;
   background: radial-gradient(circle, #fff 0%, rgba(255, 246, 220, 0.95) 12%, rgba(255, 228, 170, 0.45) 30%, transparent 68%);
   opacity: var(--sky-day, 0);
-  will-change: transform;
-  animation: sky-disc 7s ease-in-out infinite alternate;
+  animation: sky-disc 3.6s ease-out both;
 }
 
 @keyframes sky-disc {
-  from { transform: scale(0.88); }
-  to { transform: scale(1.14); }
+  0% { transform: scale(0.8); }
+  45% { transform: scale(1.12); }
+  100% { transform: scale(1); }
 }
 
 /* Opening glare: one bloom that swells out of the sun and fades. It rests at
    invisible, so it does nothing unless the animation is running. */
 .sky-flare {
-  width: 90vmax;
-  height: 90vmax;
-  left: -45vmax;
-  top: -45vmax;
+  width: 70vmax;
+  height: 70vmax;
+  left: -35vmax;
+  top: -35vmax;
   background: radial-gradient(circle, rgba(255, 252, 240, 0.95) 0%, rgba(255, 236, 190, 0.5) 22%, transparent 62%);
   opacity: 0;
   animation: sky-flare 3.2s ease-out both;
@@ -326,10 +345,11 @@ body.bg-ready .sky {
   transition: opacity 1.2s ease;
 }
 
+/* A still wash of lighter colour. The gradients are soft on their own, so
+   there is no blur filter and nothing to redraw. */
 .sky-haze {
   position: absolute;
   inset: -10%;
-  filter: blur(70px);
 }
 
 .sky-haze::before,
@@ -337,32 +357,30 @@ body.bg-ready .sky {
   content: "";
   position: absolute;
   inset: -30%;
-  will-change: transform;
 }
 
 .sky-haze::before {
   background: radial-gradient(34% 30% at 28% 62%, color-mix(in srgb, var(--sky-bottom) 80%, white), transparent 70%);
   opacity: 0.55;
-  animation: glow-drift-a 15s ease-in-out infinite alternate;
 }
 
 .sky-haze::after {
   background: radial-gradient(30% 28% at 74% 40%, color-mix(in srgb, var(--sky-mid) 75%, white), transparent 72%);
   opacity: 0.5;
-  animation: glow-drift-b 19s ease-in-out infinite alternate;
 }
 
 /* Clouds: two bands at different speeds. Each band is twice the screen wide
    with its pattern repeated at 50%, so sliding it left by half its width
    loops with no visible seam. Each cloud is a cluster of overlapping puffs.
-   The band fades in a moment after opening, once the glare has passed. */
+   The band fades in a moment after opening, once the glare has passed.
+   No blur filter: the puffs are soft gradients already, and a filter over
+   moving layers would be re-rendered on every frame. */
 .sky-clouds {
   position: absolute;
   inset: 0;
   opacity: var(--sky-clouds, 1);
   transition: opacity 1.2s ease;
-  filter: blur(11px);
-  animation: sky-clouds-in 2.6s ease-out 0.9s both;
+  animation: sky-clouds-in 2.6s ease-out 0.5s both;
 }
 
 @keyframes sky-clouds-in {
@@ -392,7 +410,7 @@ body.bg-ready .sky {
     radial-gradient(6% 5% at 63% 9%, rgba(255, 255, 255, 0.5), transparent 70%),
     radial-gradient(9% 4% at 68% 12%, rgba(255, 255, 255, 0.4), transparent 70%),
     radial-gradient(7% 3.5% at 90% 27%, rgba(255, 255, 255, 0.36), transparent 70%);
-  animation: sky-clouds 64s linear infinite;
+  animation: sky-clouds 84s linear infinite;
 }
 
 .sky-clouds::after {
@@ -404,7 +422,7 @@ body.bg-ready .sky {
     radial-gradient(8% 6% at 52% 83%, rgba(255, 255, 255, 0.5), transparent 70%),
     radial-gradient(11% 5% at 78% 66%, rgba(255, 255, 255, 0.4), transparent 70%),
     radial-gradient(8% 6% at 84% 63%, rgba(255, 255, 255, 0.46), transparent 70%);
-  animation: sky-clouds 36s linear infinite;
+  animation: sky-clouds 50s linear infinite;
 }
 
 @keyframes sky-clouds {
@@ -422,7 +440,7 @@ body.bg-ready .sky {
   height: 80px;
   opacity: 0;
   will-change: transform;
-  animation: sky-birds 26s linear 3s infinite;
+  animation: sky-birds 26s linear 2.4s infinite;
 }
 
 .sky-birds-far {
@@ -543,6 +561,13 @@ body[data-grain="on"] .grain {
 body:not([data-bg="glow"]) .homescreen-card {
   background: rgba(12, 14, 22, 0.34);
   border-color: rgba(255, 255, 255, 0.16);
+}
+/* Tiles sit on the card, which already blurs what is behind it. A second blur
+   per tile adds almost nothing to see but has to be recomputed, twelve times
+   over, every time the background moves. */
+body:not([data-bg="glow"]) .tile {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 body:not([data-bg="glow"]) .greeting {
   color: rgba(255, 255, 255, 0.72);
