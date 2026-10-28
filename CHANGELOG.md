@@ -2,6 +2,21 @@
 
 All notable changes to Frostpane are documented here.
 
+## [1.4] — 2026-10-28
+
+Frostpane now builds on Helium's Shimmer Tab, and is licensed GPL-3.0 from this release (earlier releases stay MIT).
+
+### Added
+- **Shimmer background** — Helium's own animated wallpaper, ported from Helium Prism: soft bands of light in your accent colour that fan in from the centre as a tab opens, then keep drifting
+- **Stars background** — a starfield you arrive at by dropping out of hyperspace, which then drifts and shifts with your cursor (from Shimmer Tab)
+- **Bangs** — `!yt lofi`, `!gh frostpane`, `cats !w`: over 10,000 sites searchable directly, with suggestions as you type `!` and a hint showing where Enter will go. A switch under Search engine turns them off, and the setting travels with backups
+- **Type anywhere to search** — start typing anywhere on the page and it goes into the search bar
+
+### Changed
+- The Background picker shows its five options in two rows
+- Clicking a bookmark now sends thin rings spreading out from the point of the click, like a drop in water, in place of the old swelling blob. The tile no longer squashes down and springs back when pressed
+- Hovering a bookmark is calmer: a small lift and a little more light instead of a jump out of the grid
+
 ## [1.3.3] — 2026-10-11
 
 ### Changed

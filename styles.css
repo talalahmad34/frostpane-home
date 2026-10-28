@@ -95,6 +95,8 @@ body {
 
 .sky,
 .aurora,
+.shimmer-layer,
+.stars-layer,
 .grain {
   position: fixed;
   inset: 0;
@@ -108,6 +110,8 @@ body {
 body.bg-ready .glow,
 body.bg-ready .sky,
 body.bg-ready .aurora,
+body.bg-ready .shimmer-layer,
+body.bg-ready .stars-layer,
 body.bg-ready .grain {
   transition: opacity 0.6s ease;
 }
@@ -118,12 +122,16 @@ body:not([data-bg="glow"]) .glow {
 body:not([data-bg="glow"]) .glow::before,
 body:not([data-bg="glow"]) .glow::after,
 body:not([data-bg="aurora"]) .aurora span,
+body:not([data-bg="stars"]) .stars-layer *,
+body:not([data-bg="stars"]) .stars-layer *::before,
 body:not([data-bg="sky"]) .sky *,
 body:not([data-bg="sky"]) .sky *::before,
 body:not([data-bg="sky"]) .sky *::after,
 body[data-bg-motion="off"] .glow::before,
 body[data-bg-motion="off"] .glow::after,
 body[data-bg-motion="off"] .aurora span,
+body[data-bg-motion="off"] .stars-layer *,
+body[data-bg-motion="off"] .stars-layer *::before,
 body[data-bg-motion="off"] .sky *,
 body[data-bg-motion="off"] .sky *::before,
 body[data-bg-motion="off"] .sky *::after,
@@ -546,6 +554,162 @@ body[data-bg="aurora"] .aurora {
   100% { transform: translate(10vmax, -24vmax) scale(1.1); }
 }
 
+/* ---------- Shimmer ----------
+   Helium Prism's gradient shimmer, drawn by lib/gradient-shimmer.js into a
+   WebGL canvas. The numbers below are Prism's dark-scheme values; the three
+   colours are set from the accent by script (applyShimmerColors). */
+body[data-bg="shimmer"] .shimmer-layer {
+  opacity: 1;
+}
+
+.shimmer-layer {
+  background: var(--shimmer-page, #0e1123);
+}
+
+.shimmer-canvas {
+  --shimmer-alpha: 0.7;
+  --shimmer-grain-alpha: 0.15;
+  --shimmer-grain-luminance: 144;
+  --shimmer-grain-contrast: 64;
+  --shimmer-grain-saturation: 32;
+  --shimmer-intro-alpha: 1;
+  --shimmer-speed-up-shine-boost: 0.15;
+  --shimmer-start: var(--shimmer-from, #151932);
+  --shimmer-highlight: var(--shimmer-to, #2d3c7f);
+
+  display: block;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  image-rendering: pixelated;
+  transition: opacity 0.3s;
+}
+
+.shimmer-canvas.visible {
+  opacity: 1;
+}
+
+/* Without WebGL 2: Prism's static fallback, the same two colours as a gradient */
+.shimmer-canvas.fallback {
+  background: linear-gradient(var(--shimmer-from, #151932), var(--shimmer-to, #2d3c7f));
+}
+
+/* ---------- Stars ----------
+   Shimmer Tab's starfield (lib/starfield.js has the opening and parallax).
+   The star tiles live on ::before and drift by transform, so the compositor
+   moves them instead of the page repainting a full-screen background. */
+body[data-bg="stars"] .stars-layer {
+  opacity: 1;
+}
+
+.stars-far {
+  --star: #ffffff;
+  position: absolute;
+  inset: -24px;
+  overflow: hidden;
+  background: linear-gradient(var(--stars-top, hsl(234 40% 14%)), var(--stars-bottom, hsl(230 47% 29%)));
+  /* parallax: the far field drifts a little against the cursor, the near one more */
+  translate: calc(var(--star-x, 0) * -10px) calc(var(--star-y, 0) * -10px);
+}
+
+.stars-far::before {
+  content: "";
+  position: absolute;
+  inset: 0 -350px 0 0;
+  background:
+    radial-gradient(1px 1px at 20px 30px, var(--star), transparent),
+    radial-gradient(1.5px 1.5px at 70px 150px, var(--star), transparent),
+    radial-gradient(1px 1px at 120px 80px, var(--star), transparent),
+    radial-gradient(2px 2px at 200px 220px, var(--star), transparent),
+    radial-gradient(1.5px 1.5px at 280px 60px, var(--star), transparent),
+    radial-gradient(1px 1px at 310px 180px, var(--star), transparent);
+  background-size: 350px 350px;
+  animation: stars-drift 20s linear infinite;
+}
+
+/* a sparse, brighter layer "closer" to you: moves more with the cursor */
+.stars-near {
+  --star: #ffffff;
+  position: absolute;
+  inset: -60px;
+  overflow: hidden;
+  opacity: 0.85;
+  translate: calc(var(--star-x, 0) * -32px) calc(var(--star-y, 0) * -32px);
+}
+
+.stars-near::before {
+  content: "";
+  position: absolute;
+  inset: 0 -600px 0 0;
+  background:
+    radial-gradient(2.5px 2.5px at 60px 90px, var(--star), transparent),
+    radial-gradient(2px 2px at 410px 260px, var(--star), transparent),
+    radial-gradient(3px 3px at 230px 470px, var(--star), transparent),
+    radial-gradient(2px 2px at 520px 40px, var(--star), transparent);
+  background-size: 600px 560px;
+  animation: stars-drift-near 34s linear infinite;
+}
+
+@keyframes stars-drift {
+  to { transform: translateX(-350px); }
+}
+
+@keyframes stars-drift-near {
+  to { transform: translateX(-600px); }
+}
+
+/* the field settles in from the depth once the warp brakes */
+.stars-layer.arriving .stars-far,
+.stars-layer.arriving .stars-near {
+  animation: stars-arrive 0.7s cubic-bezier(0.16, 1, 0.3, 1) 0.3s both;
+}
+
+@keyframes stars-arrive {
+  from {
+    opacity: 0;
+    scale: 1.35;
+    filter: brightness(2.2);
+  }
+}
+
+.stars-warp {
+  position: absolute;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  animation: stars-warp-out 0.3s ease 0.4s both;
+}
+
+@keyframes stars-warp-out {
+  to { opacity: 0; }
+}
+
+/* arrival flash */
+.stars-flash {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 140vmax;
+  height: 140vmax;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgb(214 224 255 / 0.9) 0%,
+    rgb(140 160 255 / 0.35) 18%,
+    rgb(80 100 220 / 0.08) 40%,
+    transparent 62%
+  );
+  translate: -50% -50%;
+  opacity: 0;
+  animation: stars-flash 0.55s cubic-bezier(0.2, 0.8, 0.2, 1) 0.3s both;
+}
+
+@keyframes stars-flash {
+  0% { opacity: 0; scale: 0.05; }
+  18% { opacity: 1; }
+  100% { opacity: 0; scale: 1; }
+}
+
 /* Film grain — an optional texture over whichever background is showing */
 body[data-grain="on"] .grain {
   opacity: 0.22;
@@ -953,16 +1117,24 @@ body[data-clock-color="custom"] .clock-meridiem {
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
   cursor: pointer;
   overflow: hidden;
-  transition: transform 0.45s cubic-bezier(0.16, 1, 0.3, 1), background 0.4s ease, border-color 0.4s ease, box-shadow 0.45s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.3s ease-out, background 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease-out;
 }
 
+/* Hover is a small lift and a little more light: enough to show which tile
+   is under the cursor without the tile jumping out of the grid. */
 .tile:hover {
-  transform: translateY(-6px) scale(1.045);
-  background: linear-gradient(150deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.045));
-  border-color: rgba(255, 255, 255, 0.14);
+  transform: translateY(-2px) scale(1.02);
+  background: linear-gradient(150deg, rgba(255, 255, 255, 0.09), rgba(255, 255, 255, 0.05));
+  border-color: rgba(255, 255, 255, 0.13);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.22),
-    0 20px 40px rgba(0, 0, 0, 0.4);
+    inset 0 1px 0 rgba(255, 255, 255, 0.14),
+    0 12px 28px rgba(0, 0, 0, 0.34);
+}
+
+/* Dock tiles are small circles, where a 2% growth would not register */
+[data-layout="dock"] .tile:hover,
+[data-layout="dock"] .tile:focus-visible {
+  transform: translateY(-2px) scale(1.07);
 }
 
 .tile::after {
@@ -971,7 +1143,7 @@ body[data-clock-color="custom"] .clock-meridiem {
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  background: radial-gradient(120px circle at var(--mx, 50%) var(--my, -20%), rgba(255, 255, 255, 0.22), transparent 68%);
+  background: radial-gradient(120px circle at var(--mx, 50%) var(--my, -20%), rgba(255, 255, 255, 0.14), transparent 68%);
   opacity: 0;
   transition: opacity 0.3s ease;
 }
@@ -982,15 +1154,18 @@ body[data-clock-color="custom"] .clock-meridiem {
 
 .tile:focus-visible {
   outline: none;
-  transform: translateY(-6px) scale(1.045);
+  transform: translateY(-2px) scale(1.02);
   box-shadow:
-    0 20px 40px rgba(0, 0, 0, 0.4),
+    0 12px 28px rgba(0, 0, 0, 0.34),
     0 0 0 2px color-mix(in srgb, var(--accent) 70%, white 15%);
 }
 
-.tile:active {
-  transform: translateY(-2px) scale(0.97);
-  transition: transform 0.15s ease;
+/* Pressing settles the tile back to rest. It used to squash and spring back,
+   which read as a bounce and upstaged the ripple. */
+.tile:active,
+[data-layout="dock"] .tile:active {
+  transform: none;
+  transition: transform 0.12s ease-out;
 }
 
 .tile.dragging {
@@ -1003,22 +1178,29 @@ body[data-clock-color="custom"] .clock-meridiem {
     0 20px 40px rgba(0, 0, 0, 0.4);
 }
 
+/* Click ripple: thin rings spreading from the point of the click, like a
+   drop in water. Script adds three per click, each starting a beat after
+   the last; a ring is a transparent disc with only a soft bright band near
+   its edge, so the tile shows through the middle. */
 .tile-ripple {
   position: absolute;
   border-radius: 50%;
   background: radial-gradient(circle,
-    rgba(255, 255, 255, 0.65) 0%,
-    color-mix(in srgb, var(--accent) 55%, transparent) 45%,
-    transparent 72%);
+    transparent 59%,
+    color-mix(in srgb, var(--accent) 50%, transparent) 62.5%,
+    rgba(255, 255, 255, 0.8) 65%,
+    color-mix(in srgb, var(--accent) 40%, transparent) 67.5%,
+    transparent 71%);
   transform: scale(0);
-  opacity: 0.6;
+  opacity: 0;
   pointer-events: none;
   mix-blend-mode: screen;
-  animation: tile-ripple-expand 650ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: tile-ripple-expand 780ms cubic-bezier(0.33, 0.45, 0.5, 1) both;
 }
 
 @keyframes tile-ripple-expand {
-  0% { transform: scale(0); opacity: 0.6; }
+  0% { transform: scale(0.04); opacity: 0.9; }
+  55% { opacity: 0.6; }
   100% { transform: scale(1); opacity: 0; }
 }
 
@@ -1318,6 +1500,86 @@ body[data-glass-icons="off"] .tile-icon::after {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+}
+
+/* Five backgrounds: two even rows instead of five squeezed buttons */
+#bg-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+}
+
+/* ---------- Bangs: hint and suggestion list ---------- */
+/* The search bar's backdrop blur makes it its own stacking context, which
+   traps the suggestion list inside it; lifting the bar keeps the list above
+   the bookmark grid that follows it. */
+.searchbar {
+  z-index: 5;
+}
+
+.bang-hint {
+  flex-shrink: 0;
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: color-mix(in srgb, var(--accent) 55%, white 35%);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.bang-hint[hidden],
+.bang-list[hidden] {
+  display: none;
+}
+
+.bang-list {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  border-radius: 18px;
+  background: rgba(23, 24, 28, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+}
+
+.bang-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 14px;
+}
+
+.bang-item.active {
+  background: color-mix(in srgb, var(--accent) 22%, transparent);
+  color: #fff;
+}
+
+.bang-item img {
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  flex-shrink: 0;
+}
+
+.bang-trigger {
+  min-width: 52px;
+  font-weight: 600;
+  color: color-mix(in srgb, var(--accent) 50%, white 45%);
+}
+
+.bang-service {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .choice-row[hidden] {

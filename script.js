@@ -16,12 +16,15 @@ const STORAGE_KEYS = {
   faviconCache: "frostpane_favicon_cache",
   engine: "frostpane_engine",
   appearance: "frostpane_appearance",
+  bangs: "frostpane_bangs",
 };
 
 const BACKGROUNDS = [
   { id: "glow", label: "Glow" },
   { id: "sky", label: "Sky" },
   { id: "aurora", label: "Aurora" },
+  { id: "shimmer", label: "Shimmer" },
+  { id: "stars", label: "Stars" },
 ];
 
 const SKY_PHASES = [
@@ -157,11 +160,121 @@ document.addEventListener("pointermove", (e) => {
 /* ---------- Search ---------- */
 let searchEngine = ENGINES[0];
 
-searchForm.addEventListener("submit", (e) => {
+/* ---------- Bangs ----------
+   "!yt lofi" or "cats !w" searches that site directly (lib/bangs.js). While a
+   "!…" word is being typed at the end of the query, matching services are
+   listed under the search bar: arrows move, Enter or Tab picks, Esc closes.
+   Behaviour follows Shimmer Tab's search bar. */
+const bangHint = document.getElementById("bang-hint");
+const bangList = document.getElementById("bang-list");
+const bangsToggle = document.getElementById("bangs-toggle");
+const Bangs = window.FrostpaneBangs;
+let bangsOn = true;
+let bangItems = [];
+let bangIndex = 0;
+let bangDismissed = "";
+
+function currentBangPrefix() {
+  const m = searchInput.value.match(/(?:^|\s)!(\S*)$/);
+  return m ? m[1] : null;
+}
+
+function renderBangs() {
+  const query = searchInput.value;
+  const prefix = bangsOn && Bangs ? currentBangPrefix() : null;
+  bangItems = prefix !== null && bangDismissed !== query ? Bangs.suggest(prefix) : [];
+  if (bangIndex >= bangItems.length) bangIndex = 0;
+
+  bangList.innerHTML = "";
+  bangItems.forEach((item, i) => {
+    const li = document.createElement("li");
+    li.className = "bang-item" + (i === bangIndex ? " active" : "");
+    li.setAttribute("role", "option");
+    li.setAttribute("aria-selected", String(i === bangIndex));
+    if (item.origin) {
+      const img = document.createElement("img");
+      img.alt = "";
+      img.src = faviconUrl(hostOf(item.origin));
+      img.onerror = () => img.remove();
+      li.appendChild(img);
+    }
+    const trigger = document.createElement("span");
+    trigger.className = "bang-trigger";
+    trigger.textContent = `!${item.trigger}`;
+    const service = document.createElement("span");
+    service.className = "bang-service";
+    service.textContent = item.service;
+    li.append(trigger, service);
+    // mousedown, so the input keeps focus and the click isn't lost to blur
+    li.addEventListener("mousedown", (e) => {
+      e.preventDefault();
+      pickBang(item.trigger);
+    });
+    bangList.appendChild(li);
+  });
+  bangList.hidden = !bangItems.length;
+  searchInput.setAttribute("aria-expanded", String(!!bangItems.length));
+
+  // Once a bang is complete, say where Enter will go
+  const match = bangsOn && Bangs && !bangItems.length ? Bangs.resolve(query) : null;
+  bangHint.hidden = !match;
+  if (match) bangHint.textContent = `${match.service} ↵`;
+}
+
+function pickBang(trigger) {
+  searchInput.value = searchInput.value.replace(/!(\S*)$/, `!${trigger} `);
+  bangIndex = 0;
+  searchInput.focus();
+  renderBangs();
+}
+
+searchInput.addEventListener("input", () => {
+  bangIndex = 0;
+  renderBangs();
+});
+
+searchInput.addEventListener("blur", () => {
+  bangList.hidden = true;
+  searchInput.setAttribute("aria-expanded", "false");
+});
+
+searchInput.addEventListener("focus", renderBangs);
+
+if (Bangs) Bangs.onLoad(() => {
+  if (document.activeElement === searchInput) renderBangs();
+});
+
+bangsToggle.addEventListener("change", async () => {
+  bangsOn = bangsToggle.checked;
+  renderBangs();
+  await storageSet({ [STORAGE_KEYS.bangs]: bangsOn });
+});
+
+async function loadBangsSetting() {
+  const data = await storageGet(STORAGE_KEYS.bangs);
+  bangsOn = data[STORAGE_KEYS.bangs] !== false;
+  bangsToggle.checked = bangsOn;
+}
+
+searchForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const q = searchInput.value.trim();
   if (!q) return;
-  window.location.href = `${searchEngine.url}${encodeURIComponent(q)}`;
+  const bang = bangsOn && Bangs ? await Bangs.resolveAsync(q) : null;
+  window.location.href = bang ? bang.url : `${searchEngine.url}${encodeURIComponent(q)}`;
+});
+
+/* Type to search: a printable key pressed anywhere outside a text field moves
+   focus into the search bar, and since focus moves during keydown the
+   character lands there. From Shimmer Tab. */
+document.addEventListener("keydown", (e) => {
+  if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey || e.isComposing) return;
+  if (e.key.length !== 1 || document.activeElement === searchInput) return;
+  if (!modalBackdrop.hidden) return;
+  const target = e.target;
+  if (target && target.closest && target.closest("input, textarea, select, [contenteditable]")) return;
+  if (e.key === " " && target && target.closest && target.closest("button, a, [role=button], [role=switch], [role=radio]")) return;
+  searchInput.focus();
 });
 
 const engineRow = document.getElementById("engine-row");
@@ -289,15 +402,22 @@ function hideTileTooltip() {
 
 function spawnRipple(el, clientX, clientY) {
   const rect = el.getBoundingClientRect();
-  const size = Math.max(rect.width, rect.height) * 2.4;
-  const ripple = document.createElement("span");
-  ripple.className = "tile-ripple";
-  ripple.style.width = `${size}px`;
-  ripple.style.height = `${size}px`;
-  ripple.style.left = `${clientX - rect.left - size / 2}px`;
-  ripple.style.top = `${clientY - rect.top - size / 2}px`;
-  el.appendChild(ripple);
-  ripple.addEventListener("animationend", () => ripple.remove());
+  // Sized so a ring crosses the tile over the whole animation instead of
+  // racing off it: its bright band ends about 0.6 of the diagonal from the click
+  const size = Math.hypot(rect.width, rect.height) * 1.85;
+  // Three rings a beat apart, each a little fainter, like a drop in water
+  [0, 110, 220].forEach((delay, i) => {
+    const ring = document.createElement("span");
+    ring.className = "tile-ripple";
+    ring.style.width = `${size}px`;
+    ring.style.height = `${size}px`;
+    ring.style.left = `${clientX - rect.left - size / 2}px`;
+    ring.style.top = `${clientY - rect.top - size / 2}px`;
+    ring.style.animationDelay = `${delay}ms`;
+    ring.style.filter = `opacity(${1 - i * 0.28})`;
+    el.appendChild(ring);
+    ring.addEventListener("animationend", () => ring.remove());
+  });
 }
 
 function renderTiles() {
@@ -499,6 +619,27 @@ grid.addEventListener("keydown", (e) => {
 });
 
 searchInput.addEventListener("keydown", (e) => {
+  // With bang suggestions open, the keys drive the list instead
+  if (bangItems.length) {
+    const n = bangItems.length;
+    if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+      e.preventDefault();
+      bangIndex = (bangIndex + (e.key === "ArrowDown" ? 1 : n - 1)) % n;
+      renderBangs();
+      return;
+    }
+    if (e.key === "Tab" || (e.key === "Enter" && currentBangPrefix() !== null)) {
+      e.preventDefault();
+      pickBang(bangItems[bangIndex].trigger);
+      return;
+    }
+    if (e.key === "Escape") {
+      e.preventDefault();
+      bangDismissed = searchInput.value;
+      renderBangs();
+      return;
+    }
+  }
   if (e.key === "ArrowDown") {
     e.preventDefault();
     const first = grid.querySelector('[data-index="0"]');
@@ -600,6 +741,7 @@ document.getElementById("export-btn").addEventListener("click", async () => {
     STORAGE_KEYS.clockFormat,
     STORAGE_KEYS.glassIcons,
     STORAGE_KEYS.appearance,
+    STORAGE_KEYS.bangs,
   ]);
   const payload = {
     app: "frostpane",
@@ -613,6 +755,7 @@ document.getElementById("export-btn").addEventListener("click", async () => {
       clockFormat: stored[STORAGE_KEYS.clockFormat] !== undefined ? stored[STORAGE_KEYS.clockFormat] : true,
       glassIcons: stored[STORAGE_KEYS.glassIcons] !== undefined ? stored[STORAGE_KEYS.glassIcons] : true,
       appearance: sanitizeAppearance(stored[STORAGE_KEYS.appearance]),
+      bangs: stored[STORAGE_KEYS.bangs] !== false,
     },
   };
   const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
@@ -693,6 +836,12 @@ async function applyImportedSettings(s) {
   if (typeof s.glassIcons === "boolean") {
     applyGlassIcons(s.glassIcons);
     writes[STORAGE_KEYS.glassIcons] = s.glassIcons;
+  }
+
+  if (typeof s.bangs === "boolean") {
+    bangsOn = s.bangs;
+    bangsToggle.checked = bangsOn;
+    writes[STORAGE_KEYS.bangs] = bangsOn;
   }
 
   // Backups from before the appearance settings existed simply have no block
@@ -916,6 +1065,51 @@ function applyAppearance() {
   renderChoiceRow(skyRow, SKY_PHASES, appearance.skyPhase, (id) => setAppearance({ skyPhase: id }));
   renderChoiceRow(clockFaceRow, CLOCK_FACES, appearance.clockFace, (id) => setAppearance({ clockFace: id }));
   updateSky();
+  syncCanvasBackgrounds();
+}
+
+/* Shimmer and Stars are driven by script (lib/gradient-shimmer.js and
+   lib/starfield.js). The shimmer's WebGL renderer is only created the first
+   time it is chosen, and its loop runs only while it is the shown background
+   and motion is on. Opening animations play when a tab opens, not on switch. */
+let shimmer = null;
+let pageOpening = true;
+
+function syncCanvasBackgrounds() {
+  const animate = appearance.bgMotion;
+  const isShimmer = appearance.background === "shimmer";
+  if (isShimmer && !shimmer && window.FrostpaneShimmer) {
+    shimmer = window.FrostpaneShimmer.create(document.getElementById("shimmer-canvas"));
+    if (pageOpening && animate) shimmer.intro();
+  }
+  if (shimmer) shimmer.setRunning(isShimmer && animate);
+
+  const isStars = appearance.background === "stars";
+  if (window.FrostpaneStars) {
+    window.FrostpaneStars.track(isStars && animate);
+    if (isStars && pageOpening && animate) window.FrostpaneStars.playWarp(document.getElementById("stars-layer"));
+  }
+  pageOpening = false;
+}
+
+/* Shimmer and Stars take their colours from the accent's hue, at the
+   lightness and saturation of Prism's and Shimmer Tab's own dark defaults. */
+function applyBackdropColors(accentHex) {
+  const r = parseInt(accentHex.slice(1, 3), 16) / 255;
+  const g = parseInt(accentHex.slice(3, 5), 16) / 255;
+  const b = parseInt(accentHex.slice(5, 7), 16) / 255;
+  const max = Math.max(r, g, b);
+  const d = max - Math.min(r, g, b);
+  let h = 0;
+  if (d) h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  h = Math.round((h * 60 + 360) % 360);
+  const css = document.documentElement.style;
+  css.setProperty("--shimmer-page", `hsl(${h} 43% 10%)`);
+  css.setProperty("--shimmer-from", `hsl(${h} 41% 14%)`);
+  css.setProperty("--shimmer-to", `hsl(${h} 48% 34%)`);
+  css.setProperty("--stars-top", `hsl(${h} 40% 14%)`);
+  css.setProperty("--stars-bottom", `hsl(${(h + 356) % 360} 47% 29%)`);
+  if (shimmer) shimmer.readColors();
 }
 
 async function setAppearance(patch) {
@@ -962,6 +1156,7 @@ const swatchRow = document.getElementById("swatch-row");
 function applyAccent(accent, soft) {
   document.documentElement.style.setProperty("--accent", accent);
   document.documentElement.style.setProperty("--accent-soft", soft || accent);
+  if (/^#[0-9a-f]{6}$/i.test(accent)) applyBackdropColors(accent);
 }
 
 function renderSwatches(active) {
@@ -1181,4 +1376,5 @@ async function loadAccent() {
   loadLayout();
   loadClockFormat();
   loadEngine();
+  loadBangsSetting();
 })();

@@ -24,6 +24,11 @@
     <div class="sky-birds sky-birds-far"><i></i><i></i><i></i><i></i><i></i></div>
   </div>
   <div class="aurora"><span></span><span></span><span></span><span></span></div>
+  <div class="shimmer-layer"><canvas class="shimmer-canvas" id="shimmer-canvas" aria-hidden="true"></canvas></div>
+  <div class="stars-layer" id="stars-layer" aria-hidden="true">
+    <div class="stars-far"></div>
+    <div class="stars-near"></div>
+  </div>
   <div class="grain"></div>
 
   <main class="panel">
@@ -40,7 +45,10 @@
           <circle cx="11" cy="11" r="7"></circle>
           <path d="M16.5 16.5 21 21"></path>
         </svg>
-        <input type="text" id="search-input" placeholder="Search or enter address" autofocus />
+        <input type="text" id="search-input" placeholder="Search or enter address" autofocus
+          role="combobox" aria-autocomplete="list" aria-controls="bang-list" aria-expanded="false" />
+        <span class="bang-hint" id="bang-hint" hidden></span>
+        <ul class="bang-list" id="bang-list" role="listbox" hidden></ul>
       </form>
 
       <div class="tile-grid" id="tile-grid"></div>
@@ -114,6 +122,13 @@
         <div class="settings-section">
           <div class="settings-label">Search engine</div>
           <div class="engine-row" id="engine-row"></div>
+          <div class="settings-row">
+            <span class="settings-row-label">Bangs (!yt, !gh…)</span>
+            <label class="switch">
+              <input type="checkbox" id="bangs-toggle" checked />
+              <span class="switch-track"></span>
+            </label>
+          </div>
         </div>
         <div class="settings-section">
           <div class="settings-label">Layout</div>
@@ -174,6 +189,9 @@
 
   <div class="tile-tooltip" id="tile-tooltip" role="tooltip"></div>
 
+  <script src="lib/gradient-shimmer.js"></script>
+  <script src="lib/starfield.js"></script>
+  <script src="lib/bangs.js"></script>
   <script src="script.js"></script>
 </body>
 </html>

@@ -8,8 +8,8 @@
 
 A live clock, quick search, and twelve bookmarks on a frosted-glass card, over a background that moves.
 
-[![Release](https://img.shields.io/badge/release-v1.3.3-6d78e8?style=flat-square)](../../releases/latest)
-[![License: MIT](https://img.shields.io/badge/license-MIT-6d78e8?style=flat-square)](LICENSE)
+[![Release](https://img.shields.io/badge/release-v1.4-6d78e8?style=flat-square)](../../releases/latest)
+[![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-6d78e8?style=flat-square)](LICENSE)
 [![Manifest V3](https://img.shields.io/badge/manifest-v3-6d78e8?style=flat-square)](manifest.json)
 [![No dependencies](https://img.shields.io/badge/dependencies-none-6d78e8?style=flat-square)](#tech)
 
@@ -23,62 +23,42 @@ A live clock, quick search, and twelve bookmarks on a frosted-glass card, over a
 
 ## Highlights
 
-- **Three backgrounds** — a soft Glow, a living Sky, or a drifting Aurora
+- **Five backgrounds** — a soft Glow, a living Sky, a drifting Aurora, Helium's Shimmer, or a starfield you arrive at through hyperspace
 - **Four clock faces** in any colour you pick
 - **Three layouts**, from a roomy grid to a minimal dock
 - **Twelve bookmarks** with frosted-glass icons, reordered by dragging
-- **Quick search** through Brave, Google, DuckDuckGo, or Startpage
+- **Quick search** through Brave, Google, DuckDuckGo, or Startpage, with **bangs** like `!yt lofi`, and you can start typing anywhere
 - **Nothing on screen until you ask** — settings appear on hover, and everything is saved in your browser
 
 <br />
 
 ## Backgrounds
 
-<table>
-<tr>
-<td align="center" width="50%">
-<img src="screenshots/sky-dusk.png" width="100%" alt="Sky background at dusk" /><br />
-<sub><b>Sky</b> — follows the clock through dawn, day, and dusk, with a sun glare on opening, drifting clouds, and passing birds</sub>
-</td>
-<td align="center" width="50%">
-<img src="screenshots/sky-night.png" width="100%" alt="Sky background at night" /><br />
-<sub><b>Sky at night</b> — twinkling stars, a moon, and shooting stars</sub>
-</td>
-</tr>
-<tr>
-<td align="center" width="50%">
-<img src="screenshots/aurora.png" width="100%" alt="Aurora background" /><br />
-<sub><b>Aurora</b> — slow colour fields built from your accent colour</sub>
-</td>
-<td align="center" width="50%">
-<img src="screenshots/stack.png" width="100%" alt="Glow background" /><br />
-<sub><b>Glow</b> — the original: a dark page with two soft drifting lights</sub>
-</td>
-</tr>
-</table>
+- **Shimmer** — Helium's animated wallpaper: bands of light in your accent colour that fan in as a tab opens
+- **Sky** — follows the clock from dawn to a starlit night, with a sun glare on opening, drifting clouds, birds, and shooting stars; or pin it to one phase
+- **Aurora** — slow colour fields built from your accent colour
+- **Stars** — opens by dropping out of hyperspace, then drifts with your cursor
+- **Glow** — the original: a dark page with two soft drifting lights
 
-Sky can follow the time of day or stay pinned to one phase. Any background can take a film-grain texture, and one switch freezes the motion without changing the look.
+Any background can take a film-grain texture, and one switch freezes the motion without changing the look.
 
 <br />
 
 ## Layouts
 
-<table>
-<tr>
-<td align="center" width="34%">
-<img src="screenshots/stack.png" width="100%" alt="Open Stack layout" /><br />
-<sub><b>Open Stack</b> — centered clock over a 6×2 grid</sub>
-</td>
-<td align="center" width="34%">
-<img src="screenshots/panel.png" width="100%" alt="Single Panel layout" /><br />
-<sub><b>Single Panel</b> — one dense card, bookmarks as pills</sub>
-</td>
-<td align="center" width="34%">
-<img src="screenshots/dock.png" width="100%" alt="Quiet Dock layout" /><br />
-<sub><b>Quiet Dock</b> — a minimal icon strip, names on hover</sub>
-</td>
-</tr>
-</table>
+- **Open Stack** — centered clock over a 6×2 grid
+- **Single Panel** — one dense card, bookmarks as pills
+- **Quiet Dock** — a minimal icon strip, names on hover
+
+<br />
+
+## Search with bangs
+
+Type `!` for suggestions from over 10,000 sites, then search one directly: `!yt lofi`, `!gh frostpane`, or `cats !w`. You can start typing anywhere on the page.
+
+<div align="center">
+<img src="screenshots/bangs.png" width="760" alt="Bang suggestions under the search bar after typing !y" />
+</div>
 
 <br />
 
@@ -87,7 +67,7 @@ Sky can follow the time of day or stay pinned to one phase. Any background can t
 Hover the bottom-right corner for the settings panel. It stays open while you change things, so every option previews live.
 
 <div align="center">
-<img src="screenshots/settings.png" width="760" alt="Settings panel open over the Sky background" />
+<img src="screenshots/settings.png" width="760" alt="Settings panel open over the Shimmer background" />
 </div>
 
 <br />
@@ -103,6 +83,15 @@ Hover the bottom-right corner for the settings panel. It stays open while you ch
 - **Liquid-glass highlights** — a soft light follows the cursor across the card, search bar, and tiles
 - **12 or 24-hour clock**, with the date and a greeting that matches the time of day
 - **Respects reduce motion** — every animation stands down when your system asks for less movement
+
+</details>
+
+<details>
+<summary><b>Search</b></summary>
+
+- **Bangs** — `!yt lofi`, `!gh frostpane`, or `cats !w` search that site directly, from a catalog of over 10,000. Type `!` for suggestions
+- **Type anywhere** — start typing anywhere on the page and it goes into the search bar
+- A switch in settings turns bangs off
 
 </details>
 
@@ -134,7 +123,9 @@ Hover the bottom-right corner for the settings panel. It stays open while you ch
 | `Enter` / `Space` | Open the focused bookmark, or add one to an empty slot |
 | `Ctrl`-click / `Cmd`-click | Open a bookmark in a new tab |
 | Middle-click | Open a bookmark in a new tab |
-| `Esc` | Close the settings panel or bookmark editor |
+| Any letter | Start a search from anywhere on the page |
+| `!` then `↑` `↓`, `Tab` | Pick a bang from the suggestions |
+| `Esc` | Close the settings panel, bookmark editor, or bang suggestions |
 
 <br />
 
@@ -155,7 +146,7 @@ Frostpane isn't on the Chrome Web Store — install it as an unpacked extension:
 
 ## Tech
 
-No build step, no framework — vanilla HTML, CSS, and JavaScript, backed by `chrome.storage.local` for persistence. Manifest V3. The only network requests are for bookmark icons.
+No build step, no framework — vanilla HTML, CSS, and JavaScript, backed by `chrome.storage.local` for persistence. Manifest V3. The only network requests are for site icons.
 
 <br />
 
@@ -167,4 +158,11 @@ See [CHANGELOG.md](CHANGELOG.md) for release notes.
 
 ## License
 
-[MIT](LICENSE) © [Talal Ahmad](https://github.com/talalahmad34)
+[GPL-3.0](LICENSE) © [Talal Ahmad](https://github.com/talalahmad34). Releases up to v1.3.3 were MIT; from v1.4, which builds on GPL code, Frostpane is GPL-3.0.
+
+### Credits
+
+- **Shimmer background** — ported from [Helium Prism](https://github.com/imputnet/helium-prism)'s GradientShimmer, © imput, GPL-3.0 (`lib/gradient-shimmer.js`)
+- **Starfield, type-to-search, and bang suggestions** — ported from [Shimmer Tab](https://github.com/dmitthedazed/shimmer-tab), © dmitthedazed, GPL-3.0 (`lib/starfield.js`, `lib/bangs.js`)
+- **Bang resolver** — from [Helium New Tab](https://github.com/exsesx/helium-new-tab), © Oleh Vanin, MIT ([licence](licenses/helium-new-tab-MIT.txt))
+- **Bang catalog** (`bangs.json`) — Helium's bang list, © Kagi Search and imput, MIT ([licence](licenses/bangs-MIT.txt))
