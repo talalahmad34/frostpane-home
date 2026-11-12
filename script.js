@@ -1,11 +1,3 @@
-/* Hold the first paint invisible until the font is actually usable, then
-   reveal in one short beat — masks any residual swap instead of showing it.
-   Capped low so a slow/failed font load never turns this into a spinner. */
-Promise.race([
-  document.fonts ? document.fonts.ready : Promise.resolve(),
-  new Promise((resolve) => setTimeout(resolve, 120)),
-]).then(() => document.documentElement.classList.add("ready"));
-
 const TILE_COUNT = 12;
 const STORAGE_KEYS = {
   tiles: "frostpane_tiles",
@@ -22,7 +14,6 @@ const STORAGE_KEYS = {
 const BACKGROUNDS = [
   { id: "glow", label: "Glow" },
   { id: "sky", label: "Sky" },
-  { id: "aurora", label: "Aurora" },
   { id: "shimmer", label: "Shimmer" },
   { id: "stars", label: "Stars" },
 ];
@@ -46,7 +37,6 @@ const APPEARANCE_DEFAULTS = {
   background: "glow",
   skyPhase: "auto",
   bgMotion: true,
-  grain: false,
   clockFace: "light",
   clockColor: null, // null = each face's own colouring; otherwise a #rrggbb override
 };
@@ -97,7 +87,27 @@ function storageGet(keys) {
   return new Promise((resolve) => chrome.storage.local.get(keys, resolve));
 }
 function storageSet(items) {
+  saveBootState();
   return new Promise((resolve) => chrome.storage.local.set(items, resolve));
+}
+
+/* Mirror of the settings lib/boot.js applies before first paint. Reads what is
+   on the page, so it is always what the user is currently looking at. */
+function saveBootState() {
+  try {
+    const { dataset } = document.body;
+    const css = document.documentElement.style;
+    localStorage.setItem("frostpane_boot", JSON.stringify({
+      layout: dataset.layout,
+      bg: dataset.bg,
+      clock: dataset.clock,
+      accent: css.getPropertyValue("--accent"),
+      soft: css.getPropertyValue("--accent-soft"),
+      use24Hour,
+    }));
+  } catch {
+    /* storage blocked: the page still works, it just waits for chrome.storage */
+  }
 }
 
 /* A row of pick-one buttons in the settings panel, used for every option of
@@ -121,7 +131,7 @@ function renderChoiceRow(row, options, active, onPick) {
 }
 
 /* ---------- Clock ---------- */
-let use24Hour = true;
+let use24Hour = (window.frostpaneBoot || {}).use24Hour !== false;
 
 function updateClock() {
   const now = new Date();
@@ -145,7 +155,15 @@ function updateClock() {
   greetingEl.textContent = rawHour < 5 ? "Good night" : rawHour < 12 ? "Good morning" : rawHour < 18 ? "Good afternoon" : "Good evening";
 }
 updateClock();
-setInterval(updateClock, 1000 * 30);
+// Tick on the minute boundary itself, so the clock changes the moment the
+// minute does instead of up to half a minute later.
+(function scheduleClockTick() {
+  const now = new Date();
+  setTimeout(() => {
+    updateClock();
+    scheduleClockTick();
+  }, 60000 - now.getSeconds() * 1000 - now.getMilliseconds() + 20);
+})();
 
 /* ---------- Liquid-glass specular sheen (follows pointer over glass surfaces) ---------- */
 const SPECULAR_TARGETS = ".homescreen-card, .searchbar, .tile, .settings-panel, .modal";
@@ -256,12 +274,25 @@ async function loadBangsSetting() {
   bangsToggle.checked = bangsOn;
 }
 
+/* Something typed that is clearly an address (a scheme, a domain with a
+   letter TLD, localhost or an IPv4, with an optional port and path) opens
+   directly; anything else is a search. */
+const ADDRESS_RE = /^(localhost|[a-z0-9-]+(\.[a-z0-9-]+)*\.[a-z]{2,24}|\d{1,3}(\.\d{1,3}){3})(:\d{1,5})?([/?#].*)?$/i;
+
+function addressFrom(q) {
+  if (/\s/.test(q)) return null;
+  if (/^https?:\/\//i.test(q)) return q;
+  if (!ADDRESS_RE.test(q)) return null;
+  const local = /^(localhost|\d{1,3}(\.\d{1,3}){3})([:/?#]|$)/i.test(q);
+  return `${local ? "http" : "https"}://${q}`;
+}
+
 searchForm.addEventListener("submit", async (e) => {
   e.preventDefault();
   const q = searchInput.value.trim();
   if (!q) return;
   const bang = bangsOn && Bangs ? await Bangs.resolveAsync(q) : null;
-  window.location.href = bang ? bang.url : `${searchEngine.url}${encodeURIComponent(q)}`;
+  window.location.href = bang ? bang.url : addressFrom(q) || `${searchEngine.url}${encodeURIComponent(q)}`;
 });
 
 /* Type to search: a printable key pressed anywhere outside a text field moves
@@ -950,14 +981,13 @@ async function loadGlassIcons() {
   applyGlassIcons(stored !== undefined ? stored : true);
 }
 
-/* ---------- Appearance: background, sky, grain, clock face ----------
+/* ---------- Appearance: background, sky, clock face ----------
    Every choice here is independent, so they mix freely: any background with
-   or without grain or motion, under any clock face. */
+   or without motion, under any clock face. */
 const bgRow = document.getElementById("bg-row");
 const skyRow = document.getElementById("sky-row");
 const clockFaceRow = document.getElementById("clock-face-row");
 const bgMotionToggle = document.getElementById("bg-motion-toggle");
-const grainToggle = document.getElementById("grain-toggle");
 const clockColorRow = document.getElementById("clock-color-row");
 const clockColorAuto = document.getElementById("clock-color-auto");
 const clockColorTrigger = document.getElementById("clock-color-trigger");
@@ -1049,10 +1079,8 @@ setInterval(updateSky, 60 * 1000);
 function applyAppearance() {
   document.body.setAttribute("data-bg", appearance.background);
   document.body.setAttribute("data-bg-motion", appearance.bgMotion ? "on" : "off");
-  document.body.setAttribute("data-grain", appearance.grain ? "on" : "off");
   document.body.setAttribute("data-clock", appearance.clockFace);
   bgMotionToggle.checked = appearance.bgMotion;
-  grainToggle.checked = appearance.grain;
   skyRow.hidden = appearance.background !== "sky";
   const customClock = !!appearance.clockColor;
   document.body.setAttribute("data-clock-color", customClock ? "custom" : "auto");
@@ -1127,13 +1155,11 @@ function sanitizeAppearance(raw, base = APPEARANCE_DEFAULTS) {
   if (SKY_PHASES.some((p) => p.id === raw.skyPhase)) a.skyPhase = raw.skyPhase;
   if (CLOCK_FACES.some((c) => c.id === raw.clockFace)) a.clockFace = raw.clockFace;
   if (typeof raw.bgMotion === "boolean") a.bgMotion = raw.bgMotion;
-  if (typeof raw.grain === "boolean") a.grain = raw.grain;
   if (raw.clockColor === null || /^#[0-9a-f]{6}$/i.test(raw.clockColor || "")) a.clockColor = raw.clockColor;
   return a;
 }
 
 bgMotionToggle.addEventListener("change", () => setAppearance({ bgMotion: bgMotionToggle.checked }));
-grainToggle.addEventListener("change", () => setAppearance({ grain: grainToggle.checked }));
 
 async function loadAppearance() {
   const data = await storageGet(STORAGE_KEYS.appearance);
@@ -1366,15 +1392,47 @@ async function loadAccent() {
 }
 
 /* ---------- Init ---------- */
+/* The page stays invisible until every saved setting is applied, so the default
+   layout, clock and empty tiles are never seen, then fans in from the centre
+   like the shimmer does. The font wait is capped low so a slow load never
+   becomes a spinner, and if storage ever stalls the page shows anyway. */
+let revealed = false;
+
+function revealPage() {
+  if (revealed) return;
+  revealed = true;
+  const root = document.documentElement;
+  const box = grid.getBoundingClientRect();
+  grid.querySelectorAll(".tile").forEach((tile) => {
+    const r = tile.getBoundingClientRect();
+    const across = Math.abs(r.left + r.width / 2 - (box.left + box.width / 2)) / r.width;
+    const down = Math.abs(r.top + r.height / 2 - (box.top + box.height / 2)) / r.height;
+    tile.style.setProperty("--reveal-delay", `${Math.round(170 + (across + down * 0.5) * 45)}ms`);
+  });
+  root.classList.add("ready", "revealing");
+  setTimeout(() => root.classList.remove("revealing"), 1200);
+}
+setTimeout(revealPage, 3000);
+
 (async function init() {
-  await loadAppearance(); // first, so the chosen background is there for the first paint
-  await loadGlassIcons(); // before any tile paints, so the icon finish never flashes
-  await loadFaviconCache();
-  await loadTiles();
-  pruneFaviconCache(); // after tiles, so it knows which hosts are still in use
-  loadAccent();
-  loadLayout();
-  loadClockFormat();
-  loadEngine();
-  loadBangsSetting();
+  try {
+    // All read together: one slow read should not hold up the others
+    await Promise.all([
+      loadLayout(),
+      loadAppearance(),
+      loadGlassIcons(),
+      loadAccent(),
+      loadClockFormat(),
+      loadEngine(),
+      loadBangsSetting(),
+      loadFaviconCache().then(loadTiles).then(pruneFaviconCache), // tiles need the icons; pruning needs the tiles
+    ]);
+    saveBootState();
+    await Promise.race([
+      document.fonts ? document.fonts.ready : Promise.resolve(),
+      new Promise((resolve) => setTimeout(resolve, 120)),
+    ]);
+  } finally {
+    revealPage();
+  }
 })();

@@ -23,11 +23,11 @@ A live clock, quick search, and twelve bookmarks on a frosted-glass card, over a
 
 ## Highlights
 
-- **Five backgrounds** — a soft Glow, a living Sky, a drifting Aurora, Helium's Shimmer, or a starfield you arrive at through hyperspace
+- **Four backgrounds** — a soft Glow, a living Sky, Helium's Shimmer, or a starfield you arrive at through hyperspace
 - **Four clock faces** in any colour you pick
 - **Three layouts**, from a roomy grid to a minimal dock
 - **Twelve bookmarks** with frosted-glass icons, reordered by dragging
-- **Quick search** through Brave, Google, DuckDuckGo, or Startpage, with **bangs** like `!yt lofi`, and you can start typing anywhere
+- **Quick search** through Brave, Google, DuckDuckGo, or Startpage, with **bangs** like `!yt lofi`. Type an address to open it, or start typing anywhere
 - **Nothing on screen until you ask** — settings appear on hover, and everything is saved in your browser
 
 <br />
@@ -36,11 +36,10 @@ A live clock, quick search, and twelve bookmarks on a frosted-glass card, over a
 
 - **Shimmer** — Helium's animated wallpaper: bands of light in your accent colour that fan in as a tab opens
 - **Sky** — follows the clock from dawn to a starlit night, with a sun glare on opening, drifting clouds, birds, and shooting stars; or pin it to one phase
-- **Aurora** — slow colour fields built from your accent colour
 - **Stars** — opens by dropping out of hyperspace, then drifts with your cursor
 - **Glow** — the original: a dark page with two soft drifting lights
 
-Any background can take a film-grain texture, and one switch freezes the motion without changing the look.
+One switch freezes the motion of any background without changing the look.
 
 <br />
 

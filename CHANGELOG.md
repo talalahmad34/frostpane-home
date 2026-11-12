@@ -2,6 +2,20 @@
 
 All notable changes to Frostpane are documented here.
 
+## [Unreleased]
+
+### Fixed
+- Typing an address such as `github.com` into the search bar now opens the site instead of searching for it
+- The clock changes the moment the minute does, instead of up to 30 seconds late
+- Opening a tab no longer shows the default layout, clock format and empty tiles before jumping to your saved setup. The page now waits until everything is applied
+
+### Changed
+- The page reveals itself on opening: the clock first, then the search bar, then the bookmarks fanning out from the centre
+- The extension description now matches what Frostpane does
+
+### Removed
+- The Aurora background and the Film grain option. A saved Aurora background falls back to Glow
+
 ## [1.4] — 2026-10-28
 
 Frostpane now builds on Helium's Shimmer Tab, and is licensed GPL-3.0 from this release (earlier releases stay MIT).
