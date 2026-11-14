@@ -5,6 +5,7 @@ All notable changes to Frostpane are documented here.
 ## [Unreleased]
 
 ### Fixed
+- The Frostpane icon is readable in the browser tab: a bold F drawn to the pixel grid on a blue glass tile lit with cyan, replacing the thin F that vanished at small sizes
 - Typing an address such as `github.com` into the search bar now opens the site instead of searching for it
 - The clock changes the moment the minute does, instead of up to 30 seconds late
 - Opening a tab no longer shows the default layout, clock format and empty tiles before jumping to your saved setup. The page now waits until everything is applied
