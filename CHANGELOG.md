@@ -2,7 +2,7 @@
 
 All notable changes to Frostpane are documented here.
 
-## [Unreleased]
+## [1.4.1] — 2026-11-14
 
 ### Fixed
 - The Frostpane icon is readable in the browser tab: a bold F drawn to the pixel grid on a blue glass tile lit with cyan, replacing the thin F that vanished at small sizes

@@ -8,7 +8,7 @@
 
 A live clock, quick search, and twelve bookmarks on a frosted-glass card, over a background that moves.
 
-[![Release](https://img.shields.io/badge/release-v1.4-6d78e8?style=flat-square)](../../releases/latest)
+[![Release](https://img.shields.io/badge/release-v1.4.1-6d78e8?style=flat-square)](../../releases/latest)
 [![License: GPL-3.0](https://img.shields.io/badge/license-GPL--3.0-6d78e8?style=flat-square)](LICENSE)
 [![Manifest V3](https://img.shields.io/badge/manifest-v3-6d78e8?style=flat-square)](manifest.json)
 [![No dependencies](https://img.shields.io/badge/dependencies-none-6d78e8?style=flat-square)](#tech)
